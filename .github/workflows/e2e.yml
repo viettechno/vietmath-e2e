@@ -1,0 +1,95 @@
+name: E2E
+
+# Runs the browser tests against the whole app, started from the GHCR images
+# of vietmath-backend and vietmath-web (stack/docker-compose.yml).
+#
+# Image tags, first match wins: the workflow inputs, the repository variables
+# E2E_BACKEND_TAG / E2E_WEB_TAG, then "latest" (the main branches).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Nightly full run, 02:13 in Vietnam.
+    - cron: '13 19 * * *'
+  workflow_dispatch:
+    inputs:
+      backend_tag:
+        description: vietmath-backend image tag (e.g. latest, sha-1a2b3c4, feat-question-bank)
+        required: false
+      web_tag:
+        description: vietmath-web image tag
+        required: false
+      grep:
+        description: Only tests matching this (e.g. @smoke, E2E-RW)
+        required: false
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run format:check
+
+  e2e:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BACKEND_TAG: ${{ inputs.backend_tag || vars.E2E_BACKEND_TAG || 'latest' }}
+      WEB_TAG: ${{ inputs.web_tag || vars.E2E_WEB_TAG || 'latest' }}
+      # Pull requests and pushes run the smoke suite; the nightly run everything.
+      E2E_GREP: ${{ inputs.grep || (github.event_name == 'schedule' && '.') || '@smoke' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      # The app images are private packages: this repository needs read access
+      # to them (see README, "CI setup"), or a GHCR_TOKEN secret.
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Start the app
+        run: scripts/stack-up.sh
+
+      - name: Run the tests
+        run: npx playwright test --grep "$E2E_GREP"
+
+      - name: Save the app logs
+        if: failure()
+        run: docker compose -f stack/docker-compose.yml logs --no-color > stack.log
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+            stack.log
+          retention-days: 14
+          if-no-files-found: ignore
