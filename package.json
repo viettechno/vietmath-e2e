@@ -1,0 +1,26 @@
+{
+  "name": "vietmath-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser end-to-end tests for VietMath (web + API)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "stack:up": "scripts/stack-up.sh",
+    "stack:down": "scripts/stack-down.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "^22.20.4",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3"
+  }
+}

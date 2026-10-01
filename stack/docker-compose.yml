@@ -1,0 +1,107 @@
+# The whole VietMath app for end-to-end tests: the staging VM stack
+# (vietmath-infra/vm) plus Mailpit, which catches the OTP emails so tests can
+# read the codes.
+#
+#   Playwright ──▶ caddy :8080 ──/api/*──▶ api ──▶ postgres, redis, media
+#                               └──/*─────▶ web
+#   api ──SMTP──▶ mailpit :1025        Playwright ──HTTP──▶ mailpit :8025
+#
+# Pick the app versions with BACKEND_TAG and WEB_TAG (GHCR image tags).
+# Start it with scripts/stack-up.sh. Everything here is throwaway test data.
+
+name: vietmath-e2e
+
+x-backend-image: &backend-image ${BACKEND_IMAGE:-ghcr.io/viettechno/vietmath-backend}:${BACKEND_TAG:-latest}
+
+x-database-url: &database-url postgres://vietmath:e2e-postgres@postgres:5432/vietmath?sslmode=disable
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vietmath
+      POSTGRES_PASSWORD: e2e-postgres
+      POSTGRES_DB: vietmath
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vietmath -d vietmath']
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    environment:
+      MP_MAX_MESSAGES: 5000
+    ports:
+      - '${E2E_MAILPIT_PORT:-8025}:8025'
+
+  # The API runs as the distroless "nonroot" user (uid 65532).
+  media-init:
+    image: busybox:1.37
+    command: ['chown', '-R', '65532:65532', '/data/media']
+    volumes:
+      - media:/data/media
+
+  migrate:
+    image: *backend-image
+    entrypoint: ['/migrate', 'up']
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: *backend-image
+    environment:
+      APP_ENV: staging
+      LOG_LEVEL: debug
+      PUBLIC_URL: http://localhost:${E2E_PORT:-8080}
+      DATABASE_URL: *database-url
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: e2e-only-jwt-secret-not-used-anywhere-else-0123456789
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_FROM: no-reply@vietmath.test
+      MEDIA_BACKEND: local
+      MEDIA_LOCAL_DIR: /data/media
+    volumes:
+      - media:/data/media
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      media-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/viettechno/vietmath-web}:${WEB_TAG:-latest}
+
+  # Same routing as staging and production: /api/* to the API, the rest to the SPA.
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      SITE_ADDRESS: ':80'
+    ports:
+      - '${E2E_PORT:-8080}:80'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - api
+      - web
+
+volumes:
+  media:
