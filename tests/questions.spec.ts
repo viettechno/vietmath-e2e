@@ -91,7 +91,7 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
       creator.api.createQuestion(textQuestion(asmoPack.id, [topic.id], `${word} ${text}`, o));
     await create('apples', { difficulty: 'EASY' });
     await create('pears', { difficulty: 'MEDIUM' });
-    await create('plums', { difficulty: 'HARD', examType: 'REAL' });
+    await create('plums', { difficulty: 'HARD', languageMode: 'EN_VI' });
 
     await signIn(page, creator.email, creator.password);
     await page.goto('/staff/questions');
@@ -110,11 +110,12 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
     await expect(results).not.toContainText(`${word} apples`);
 
     await page.getByLabel('Difficulty').selectOption({ label: 'All' });
-    await page.getByLabel('Exam type').selectOption({ label: 'Real exam' });
+    const language = page.getByRole('combobox', { name: 'Language' });
+    await language.selectOption({ label: 'English + Vietnamese' });
     await expect(page.getByText('1 question', { exact: true })).toBeVisible();
     await expect(results).toContainText(`${word} plums`);
 
-    await page.getByLabel('Exam type').selectOption({ label: 'All' });
+    await language.selectOption({ label: 'All' });
     await page.getByLabel('Only my questions').click();
     await expect(page.getByLabel('Only my questions')).not.toBeChecked();
     await page.getByLabel('Topic').selectOption({ label: topic.nameEn });
