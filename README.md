@@ -138,11 +138,11 @@ assets/                images for the question bank tests
 
 `.github/workflows/e2e.yml` starts the stack from GHCR images and runs the tests:
 
-| Trigger                      | Tests                          | Image tags                                                            |
-| ---------------------------- | ------------------------------ | --------------------------------------------------------------------- |
+| Trigger                        | Tests                          | Image tags                                                            |
+| ------------------------------ | ------------------------------ | --------------------------------------------------------------------- |
 | Pull request, push to `master` | `@smoke`                       | repository variables `E2E_BACKEND_TAG` / `E2E_WEB_TAG`, else `latest` |
-| Nightly (02:13 Vietnam time) | everything                     | same                                                                  |
-| Run workflow (manual)        | `grep` input, default `@smoke` | `backend_tag` / `web_tag` inputs                                      |
+| Nightly (02:13 Vietnam time)   | everything                     | same                                                                  |
+| Run workflow (manual)          | `grep` input, default `@smoke` | `backend_tag` / `web_tag` inputs                                      |
 
 The HTML report, traces, videos and the app log are uploaded as the
 `playwright-report` artifact.
