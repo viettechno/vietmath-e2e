@@ -17,8 +17,8 @@ points to the manual steps it automates.
 
 ## What is automated
 
-Wave 1, the **smoke suite** (tag `@smoke`, 30 tests, under a minute with 4 workers). It
-covers every Release Phase 1 and 2 acceptance criterion through the browser:
+Wave 1, the **smoke suite** (tag `@smoke`, 34 tests, under a minute with 4 workers). It
+covers every Release Phase 1, 2 and 3 acceptance criterion through the browser:
 
 | Spec                          | Scenarios                                                       |
 | ----------------------------- | --------------------------------------------------------------- |
@@ -34,6 +34,7 @@ covers every Release Phase 1 and 2 acceptance criterion through the browser:
 | `tests/questions.spec.ts`     | QB-01 (text-only × 4, image-only × 2, mixed × 6 choices), QB-06 |
 | `tests/review.spec.ts`        | RW-01, RW-03, RW-04, RW-07                                      |
 | `tests/access.spec.ts`        | ACL-01 (each role)                                              |
+| `tests/templates.spec.ts`     | PAR-01, PAR-02, PAR-03, PAR-04 (templates)                      |
 
 Waves 2 (regression) and 3 (slow, real OTP expiry) are listed in §15.3 of the scenarios
 document.

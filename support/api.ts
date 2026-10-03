@@ -62,15 +62,40 @@ export interface AnswerChoice {
   isCorrect: boolean;
 }
 
+export interface TemplateVariable {
+  varName: string;
+  varType: 'INT' | 'DECIMAL' | 'ENUM';
+  minValue?: number | null;
+  maxValue?: number | null;
+  step?: number | null;
+  allowedValues?: number[] | null;
+}
+
+export interface QuestionTemplate {
+  variables: TemplateVariable[];
+  constraints: string[];
+  correctAnswerFormula: string;
+  distractorFormulas: string[];
+}
+
+export interface TemplateVariant {
+  values: Record<string, number>;
+  promptTextEn: string;
+  promptTextVi: string | null;
+  correctAnswer: { en: string; vi: string };
+  distractors: { en: string; vi: string }[];
+}
+
 export interface QuestionInput {
   examPackId: string;
-  examType: 'MOCK' | 'REAL';
   topicIds: string[];
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   languageMode: 'EN' | 'EN_VI';
   promptTextEn: string | null;
   promptTextVi: string | null;
   promptImageUrl: string | null;
+  isTemplate?: boolean;
+  template?: QuestionTemplate | null;
   answerChoices: AnswerChoice[];
 }
 
@@ -197,6 +222,13 @@ export class Api {
   createQuestion = (input: QuestionInput) => this.call<Question>('/questions', post(input));
 
   getQuestion = (id: string) => this.call<Question>(`/questions/${id}`);
+
+  previewTemplate = (input: {
+    promptTextEn: string;
+    promptTextVi?: string | null;
+    template: QuestionTemplate;
+    count?: number;
+  }) => this.call<{ variants: TemplateVariant[] }>('/templates/preview', post(input));
 
   act = (
     id: string,

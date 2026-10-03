@@ -8,14 +8,12 @@ export class QuestionEditor {
   async classify(o: {
     pack: string;
     topics: string[];
-    examType?: 'Mock exam' | 'Real exam';
     difficulty?: 'Easy' | 'Medium' | 'Hard';
     language?: 'English' | 'English + Vietnamese';
   }) {
     const { page } = this;
     await page.getByLabel('Exam pack').selectOption({ label: o.pack });
     for (const topic of o.topics) await page.getByRole('checkbox', { name: topic }).check();
-    await page.getByLabel('Exam type').selectOption({ label: o.examType ?? 'Mock exam' });
     await page.getByLabel('Difficulty').selectOption({ label: o.difficulty ?? 'Easy' });
     // "Language" alone also matches the interface language switcher.
     await page
@@ -64,7 +62,6 @@ export function textQuestion(
   }));
   return {
     examPackId,
-    examType: 'MOCK',
     topicIds,
     difficulty: 'EASY',
     languageMode: 'EN',
