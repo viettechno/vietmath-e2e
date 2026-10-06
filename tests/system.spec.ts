@@ -1,4 +1,5 @@
 import { expect, test } from '../support/fixtures';
+import { adminSite } from '../support/pages/auth';
 
 test.describe('Deployment and routing', { tag: '@smoke' }, () => {
   test('E2E-SYS-01 · The app and the API are reachable', async ({ page, request }) => {
@@ -26,7 +27,10 @@ test.describe('Deployment and routing', { tag: '@smoke' }, () => {
     await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Back to home' })).toBeVisible();
 
+    // The staff console moved to the admin web.
     await page.goto('/staff');
-    await expect(page).toHaveURL(/\/login\?next=%2Fstaff$/);
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
+    await page.goto(adminSite('/questions'));
+    await expect(page).toHaveURL(adminSite('/login?next=%2Fquestions'));
   });
 });

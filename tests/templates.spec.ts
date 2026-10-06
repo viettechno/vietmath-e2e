@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { ApiError, type QuestionTemplate, type TemplateVariant } from '../support/api';
 import { unique } from '../support/data';
 import { expect, test } from '../support/fixtures';
-import { expectNotice, signIn } from '../support/pages/auth';
+import { adminSite, expectNotice, signInStaff } from '../support/pages/auth';
 import { QuestionEditor, statusBadge, textQuestion } from '../support/pages/questions';
 
 // Release Phase 3: the Parametrization Engine (templates for mock questions).
@@ -72,8 +72,8 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
     const marker = unique('apples');
     const prompt = `A store has {a} apples and sells {b} of them. How many are left? (${marker})`;
 
-    await signIn(page, creator.email, creator.password);
-    await page.goto('/staff/questions/new');
+    await signInStaff(page, creator.email, creator.password);
+    await page.goto(adminSite('/questions/new'));
     await new QuestionEditor(page).classify({ pack: asmoPack.name, topics: [topic.nameEn] });
     await fillApplesTemplate(page, prompt);
 
@@ -124,8 +124,8 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
     const creator = await accounts.staff('CONTENT_CREATOR');
     const topic = await newTopic();
 
-    await signIn(page, creator.email, creator.password);
-    await page.goto('/staff/questions/new');
+    await signInStaff(page, creator.email, creator.password);
+    await page.goto(adminSite('/questions/new'));
     await new QuestionEditor(page).classify({ pack: asmoPack.name, topics: [topic.nameEn] });
     // a is at least 5 and b at most 4: "a < b" never holds.
     await fillApplesTemplate(page, `{a} apples, {b} sold (${unique('never')})`, 'a < b');
@@ -138,7 +138,7 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
     await expect(page.getByRole('alert').last()).toContainText(
       'no valid variant found: the constraints are (almost) never all true',
     );
-    await expect(page).toHaveURL('/staff/questions/new');
+    await expect(page).toHaveURL(adminSite('/questions/new'));
 
     // A formula error names the field it is in.
     await page.getByRole('textbox', { name: 'Constraint 1' }).fill('a <');
@@ -189,8 +189,8 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
     });
     await creator.api.act(q.id, 'submit-review');
 
-    await signIn(page, reviewer.email, reviewer.password);
-    await page.goto(`/staff/questions/${q.id}`);
+    await signInStaff(page, reviewer.email, reviewer.password);
+    await page.goto(adminSite(`/questions/${q.id}`));
     const preview = page.getByRole('region', { name: 'Preview' });
     await expect(preview).toContainText('a: Whole number, 5 to 20');
     await expect(preview).toContainText('{a - b}');

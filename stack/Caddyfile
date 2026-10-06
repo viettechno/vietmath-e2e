@@ -1,12 +1,35 @@
-# Copy of vietmath-infra/vm/Caddyfile (plain HTTP only).
-{$SITE_ADDRESS} {
-	encode zstd gzip
+# Copy of vietmath-infra/vm/Caddyfile (plain HTTP only: SITE_ADDRESS ":80",
+# ADMIN_SITE_ADDRESS ":8081").
 
+# The REST API, including Google sign-in callbacks and uploaded images
+# (/api/v1/media/*). Both sites send it to the same API, so neither web app
+# needs CORS.
+(api) {
 	handle /api/* {
 		reverse_proxy api:8080
 	}
+}
+
+# Students and parents: vietmath-web.
+{$SITE_ADDRESS} {
+	encode zstd gzip
+	import api
 
 	handle {
 		reverse_proxy web:8080
 	}
+
+	log
+}
+
+# Content Creators, Reviewers and System Admins: vietmath-admin-web.
+{$ADMIN_SITE_ADDRESS} {
+	encode zstd gzip
+	import api
+
+	handle {
+		reverse_proxy admin-web:8080
+	}
+
+	log
 }

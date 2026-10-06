@@ -1,6 +1,6 @@
 import { unique } from '../support/data';
 import { expect, test } from '../support/fixtures';
-import { expectNotice, signIn } from '../support/pages/auth';
+import { adminSite, expectNotice, signInStaff } from '../support/pages/auth';
 import { LABELS, QuestionEditor, statusBadge, textQuestion } from '../support/pages/questions';
 
 const IMG = {
@@ -32,8 +32,8 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
       const prompt = `${unique('What time is it')}?`;
       const editor = new QuestionEditor(page);
 
-      await signIn(page, creator.email, creator.password);
-      await page.goto('/staff/questions');
+      await signInStaff(page, creator.email, creator.password);
+      await page.goto(adminSite('/questions'));
       await page.getByRole('link', { name: 'New question' }).click();
       await expect(page.getByRole('heading', { name: 'New question' })).toBeVisible();
 
@@ -60,7 +60,7 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
       await expect(preview.getByRole('listitem').nth(1)).toContainText('Correct');
 
       await page.getByRole('button', { name: 'Save draft' }).click();
-      await expect(page).toHaveURL(/\/staff\/questions\/[0-9a-f-]{36}$/);
+      await expect(page).toHaveURL(/\/questions\/[0-9a-f-]{36}$/);
       await expectNotice(page, 'Question saved as a draft.');
       await expect(statusBadge(page)).toHaveText('Draft');
 
@@ -94,8 +94,8 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
     await create('pears', { difficulty: 'MEDIUM' });
     await create('plums', { difficulty: 'HARD', languageMode: 'EN_VI' });
 
-    await signIn(page, creator.email, creator.password);
-    await page.goto('/staff/questions');
+    await signInStaff(page, creator.email, creator.password);
+    await page.goto(adminSite('/questions'));
     const results = page.getByRole('table');
     // Filters live in the URL: click, then wait for the new state.
     await page.getByLabel('Only my questions').click();

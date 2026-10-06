@@ -3,10 +3,12 @@
 # read the codes.
 #
 #   Playwright ──▶ caddy :8080 ──/api/*──▶ api ──▶ postgres, redis, media
-#                               └──/*─────▶ web
+#                        │      └──/*─────▶ web (student web)
+#                        └ :8081 ──/api/*──▶ api
+#                               └──/*─────▶ admin-web
 #   api ──SMTP──▶ mailpit :1025        Playwright ──HTTP──▶ mailpit :8025
 #
-# Pick the app versions with BACKEND_TAG and WEB_TAG (GHCR image tags).
+# Pick the app versions with BACKEND_TAG, WEB_TAG and ADMIN_WEB_TAG (GHCR image tags).
 # Start it with scripts/stack-up.sh. Everything here is throwaway test data.
 
 name: vietmath-e2e
@@ -90,18 +92,24 @@ services:
   web:
     image: ${WEB_IMAGE:-ghcr.io/viettechno/vietmath-web}:${WEB_TAG:-latest}
 
-  # Same routing as staging and production: /api/* to the API, the rest to the SPA.
+  admin-web:
+    image: ${ADMIN_WEB_IMAGE:-ghcr.io/viettechno/vietmath-admin-web}:${ADMIN_WEB_TAG:-latest}
+
+  # Same routing as staging and production: two sites, /api/* on either to the API.
   caddy:
     image: caddy:2-alpine
     environment:
       SITE_ADDRESS: ':80'
+      ADMIN_SITE_ADDRESS: ':8081'
     ports:
       - '${E2E_PORT:-8080}:80'
+      - '${E2E_ADMIN_PORT:-8081}:8081'
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:
       - api
       - web
+      - admin-web
 
 volumes:
   media:
