@@ -27,7 +27,7 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U vietmath -d vietmath']
+      test: ["CMD-SHELL", "pg_isready -U vietmath -d vietmath"]
       interval: 2s
       timeout: 3s
       retries: 60
@@ -35,7 +35,7 @@ services:
   redis:
     image: redis:7-alpine
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
       interval: 2s
       timeout: 3s
       retries: 60
@@ -45,18 +45,18 @@ services:
     environment:
       MP_MAX_MESSAGES: 5000
     ports:
-      - '${E2E_MAILPIT_PORT:-8025}:8025'
+      - "${E2E_MAILPIT_PORT:-8025}:8025"
 
   # The API runs as the distroless "nonroot" user (uid 65532).
   media-init:
     image: busybox:1.37
-    command: ['chown', '-R', '65532:65532', '/data/media']
+    command: ["chown", "-R", "65532:65532", "/data/media"]
     volumes:
       - media:/data/media
 
   migrate:
     image: *backend-image
-    entrypoint: ['/migrate', 'up']
+    entrypoint: ["/migrate", "up"]
     environment:
       DATABASE_URL: *database-url
     depends_on:
@@ -97,13 +97,13 @@ services:
 
   # Same routing as staging and production: two sites, /api/* on either to the API.
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2.10-alpine
     environment:
-      SITE_ADDRESS: ':80'
-      ADMIN_SITE_ADDRESS: ':8081'
+      SITE_ADDRESS: ":80"
+      ADMIN_SITE_ADDRESS: ":8081"
     ports:
-      - '${E2E_PORT:-8080}:80'
-      - '${E2E_ADMIN_PORT:-8081}:8081'
+      - "${E2E_PORT:-8080}:80"
+      - "${E2E_ADMIN_PORT:-8081}:8081"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:
