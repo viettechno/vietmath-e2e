@@ -60,6 +60,8 @@ test.describe('User management', { tag: '@smoke' }, () => {
       await page.getByRole('button', { name: 'Search', exact: true }).click();
       await expect(page.getByText('1 user', { exact: true })).toBeVisible();
       await page.getByRole('link', { name: `Edit ${student.fullName}` }).click();
+      // Wait for the edit page: the users list has a "Status" filter of its own.
+      await expect(page.getByRole('heading', { level: 1, name: student.fullName })).toBeVisible();
       await page.getByLabel('Status').selectOption({ label: status });
       await page.getByRole('button', { name: 'Save changes' }).click();
       await expectNotice(
