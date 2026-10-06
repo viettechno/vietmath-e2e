@@ -1,6 +1,6 @@
 # vietmath-e2e
 
-Browser end-to-end tests for VietMath: the real web app, API, database and email,
+Browser end-to-end tests for VietMath: the real web apps (student web and admin web), API, database and email,
 tested together as a user sees them. Written in **TypeScript** with
 **[Playwright](https://playwright.dev)**.
 
@@ -25,7 +25,7 @@ covers every Release Phase 1, 2 and 3 acceptance criterion through the browser:
 | `tests/system.spec.ts`        | SYS-01, SYS-02                                                  |
 | `tests/i18n.spec.ts`          | I18N-01                                                         |
 | `tests/auth/register.spec.ts` | REG-01                                                          |
-| `tests/auth/login.spec.ts`    | LOGIN-01, LOGIN-02 (each staff role), LOGIN-03                  |
+| `tests/auth/login.spec.ts`    | LOGIN-01, LOGIN-02 (each staff role), LOGIN-02a, LOGIN-03       |
 | `tests/auth/sessions.spec.ts` | SESS-01, SESS-02                                                |
 | `tests/auth/password.spec.ts` | PWD-01                                                          |
 | `tests/browse.spec.ts`        | BRW-01                                                          |
@@ -48,9 +48,10 @@ Container Registry (`docker login ghcr.io` with a token that has `read:packages`
 npm ci
 npx playwright install chromium        # once
 
-# Start the whole app (http://localhost:8080) and Mailpit (http://localhost:8025),
-# and create the first System Admin. Pick the app versions with image tags:
-BACKEND_TAG=latest WEB_TAG=latest scripts/stack-up.sh
+# Start the whole app (student web http://localhost:8080, admin web http://localhost:8081)
+# and Mailpit (http://localhost:8025), and create the first System Admin.
+# Pick the app versions with image tags:
+BACKEND_TAG=latest WEB_TAG=latest ADMIN_WEB_TAG=latest scripts/stack-up.sh
 
 npm test                               # everything
 npm run test:smoke                     # only @smoke
@@ -74,14 +75,15 @@ Useful while debugging:
 
 ### Settings
 
-| Variable                                | Default                                     | Meaning                                                                        |
-| --------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
-| `BACKEND_TAG`, `WEB_TAG`                | `latest`                                    | GHCR image tags of `vietmath-backend` / `vietmath-web` (`scripts/stack-up.sh`) |
-| `BACKEND_IMAGE`, `WEB_IMAGE`            | `ghcr.io/viettechno/vietmath-{backend,web}` | Other images, e.g. ones built locally (with `E2E_SKIP_PULL=1`)                 |
-| `E2E_BASE_URL`                          | `http://localhost:8080`                     | The app under test (web and `/api` on one origin)                              |
-| `E2E_MAILPIT_URL`                       | `http://localhost:8025`                     | Mailpit, to read email codes. Empty: tests that need a code are skipped        |
-| `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD` | `admin@vietmath.test`, `E2eAdmin123`        | An existing System Admin                                                       |
-| `E2E_MAIL_DOMAIN`                       | `vietmath.test`                             | Domain of the email addresses the tests create                                 |
+| Variable                                        | Default                                               | Meaning                                                                                               |
+| ----------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `BACKEND_TAG`, `WEB_TAG`, `ADMIN_WEB_TAG`       | `latest`                                              | GHCR image tags of `vietmath-backend` / `vietmath-web` / `vietmath-admin-web` (`scripts/stack-up.sh`) |
+| `BACKEND_IMAGE`, `WEB_IMAGE`, `ADMIN_WEB_IMAGE` | `ghcr.io/viettechno/vietmath-{backend,web,admin-web}` | Other images, e.g. ones built locally (with `E2E_SKIP_PULL=1`)                                        |
+| `E2E_BASE_URL`                                  | `http://localhost:8080`                               | The student web under test (web and `/api` on one origin)                                             |
+| `E2E_ADMIN_URL`                                 | `http://localhost:8081`                               | The admin web under test (staff pages; `/api` on the same origin)                                     |
+| `E2E_MAILPIT_URL`                               | `http://localhost:8025`                               | Mailpit, to read email codes. Empty: tests that need a code are skipped                               |
+| `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`         | `admin@vietmath.test`, `E2eAdmin123`                  | An existing System Admin                                                                              |
+| `E2E_MAIL_DOMAIN`                               | `vietmath.test`                                       | Domain of the email addresses the tests create                                                        |
 
 ### Against staging
 
@@ -89,7 +91,7 @@ Point the tests at the staging VM. Staging has no Mailpit, so the tests that rea
 email codes are skipped:
 
 ```bash
-E2E_BASE_URL=https://staging.vietmath.vn E2E_MAILPIT_URL= \
+E2E_BASE_URL=https://staging.vietmath.vn E2E_ADMIN_URL=https://admin.staging.vietmath.vn E2E_MAILPIT_URL= \
 E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… npx playwright test
 ```
 
@@ -138,18 +140,18 @@ assets/                images for the question bank tests
 
 `.github/workflows/e2e.yml` starts the stack from GHCR images and runs the tests:
 
-| Trigger                        | Tests                          | Image tags                                                            |
-| ------------------------------ | ------------------------------ | --------------------------------------------------------------------- |
-| Pull request, push to `master` | `@smoke`                       | repository variables `E2E_BACKEND_TAG` / `E2E_WEB_TAG`, else `latest` |
-| Nightly (02:13 Vietnam time)   | everything                     | same                                                                  |
-| Run workflow (manual)          | `grep` input, default `@smoke` | `backend_tag` / `web_tag` inputs                                      |
+| Trigger                        | Tests                          | Image tags                                                                                  |
+| ------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------- |
+| Pull request, push to `master` | `@smoke`                       | repository variables `E2E_BACKEND_TAG` / `E2E_WEB_TAG` / `E2E_ADMIN_WEB_TAG`, else `latest` |
+| Nightly (02:13 Vietnam time)   | everything                     | same                                                                                        |
+| Run workflow (manual)          | `grep` input, default `@smoke` | `backend_tag` / `web_tag` / `admin_web_tag` inputs                                          |
 
 The HTML report, traces, videos and the app log are uploaded as the
 `playwright-report` artifact.
 
 ### CI setup (once)
 
-1. **Read access to the images.** The `vietmath-backend` and `vietmath-web` packages are
+1. **Read access to the images.** The `vietmath-backend`, `vietmath-web` and `vietmath-admin-web` packages are
    private. On GitHub, open each package (organization → Packages → the package →
    Package settings → **Manage Actions access**) and add `vietmath-e2e` with the
    **Read** role. Alternatively, add a `GHCR_TOKEN` secret here: a token with

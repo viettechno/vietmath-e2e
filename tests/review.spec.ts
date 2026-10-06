@@ -1,7 +1,7 @@
 import type { Question } from '../support/api';
 import { unique } from '../support/data';
 import { expect, test, type Account } from '../support/fixtures';
-import { expectNotice, signIn } from '../support/pages/auth';
+import { adminSite, expectNotice, signInStaff } from '../support/pages/auth';
 import { statusBadge, textQuestion } from '../support/pages/questions';
 
 test.describe('Review workflow', { tag: '@smoke' }, () => {
@@ -24,8 +24,8 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
     const prompt = unique('How many sides does a triangle have');
     const q = await creator.api.createQuestion(textQuestion(asmoPack.id, [topicId], prompt));
 
-    await signIn(page, creator.email, creator.password);
-    await page.goto(`/staff/questions/${q.id}`);
+    await signInStaff(page, creator.email, creator.password);
+    await page.goto(adminSite(`/questions/${q.id}`));
     await page.getByRole('button', { name: 'Submit for review' }).click();
     await expectNotice(page, 'Submitted for review.');
     await expect(statusBadge(page)).toHaveText('Pending review');
@@ -33,7 +33,7 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
     await expect(page.getByLabel('Question (English)')).toHaveCount(0);
 
     const rp = await newBrowser();
-    await signIn(rp, reviewer.email, reviewer.password);
+    await signInStaff(rp, reviewer.email, reviewer.password);
     await rp
       .getByRole('navigation', { name: 'Staff', exact: true })
       .getByRole('link', { name: 'Review queue' })
@@ -45,7 +45,7 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
     await expect(history(rp)).toContainText('Submitted for review');
     await expect(history(rp)).toContainText('Approved and published');
 
-    await rp.goto('/staff/review');
+    await rp.goto(adminSite('/review'));
     await expect(rp.getByRole('link', { name: prompt })).toHaveCount(0);
   });
 
@@ -63,8 +63,8 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
   }) => {
     const q = await pendingWithoutVietnamese(asmoPack.id);
 
-    await signIn(page, reviewer.email, reviewer.password);
-    await page.goto(`/staff/questions/${q.id}`);
+    await signInStaff(page, reviewer.email, reviewer.password);
+    await page.goto(adminSite(`/questions/${q.id}`));
     await expect(
       page.getByText(/You can edit this question directly before approving it/),
     ).toBeVisible();
@@ -82,8 +82,8 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
     const q = await pendingWithoutVietnamese(asmoPack.id);
     const fixedPrompt = `${q.promptTextEn} (edited)`;
 
-    await signIn(page, reviewer.email, reviewer.password);
-    await page.goto(`/staff/questions/${q.id}`);
+    await signInStaff(page, reviewer.email, reviewer.password);
+    await page.goto(adminSite(`/questions/${q.id}`));
     await page.getByLabel('Question (English)').fill(fixedPrompt);
     await page.getByLabel('Question (Vietnamese)').fill('Bây giờ là mấy giờ?');
     for (const [i, label] of ['A', 'B', 'C', 'D'].entries()) {
@@ -116,8 +116,8 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
     await creator.api.act(q.id, 'submit-review');
     await reviewer.api.act(q.id, 'approve');
 
-    await signIn(page, reviewer.email, reviewer.password);
-    await page.goto(`/staff/questions/${q.id}`);
+    await signInStaff(page, reviewer.email, reviewer.password);
+    await page.goto(adminSite(`/questions/${q.id}`));
     await page.getByRole('button', { name: 'Archive' }).click();
     await expectNotice(page, 'Archived.');
     await expect(statusBadge(page)).toHaveText('Archived');
@@ -126,7 +126,7 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
       await page.getByRole('searchbox', { name: 'Search' }).fill(prompt);
       await page.getByRole('button', { name: 'Search', exact: true }).click();
     };
-    await page.goto('/staff/questions');
+    await page.goto(adminSite('/questions'));
     await search();
     await expect(page.getByText('No questions match the filters.')).toBeVisible();
 

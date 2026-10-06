@@ -1,7 +1,7 @@
 import { publicApi } from '../support/api';
 import { unique } from '../support/data';
 import { expect, test } from '../support/fixtures';
-import { expectNotice, signIn } from '../support/pages/auth';
+import { adminSite, expectNotice, signInStaff } from '../support/pages/auth';
 
 test.describe('Exam packs and topics', { tag: '@smoke' }, () => {
   test('E2E-CAT-01 · Create an exam pack; only packs on sale are public', async ({
@@ -25,8 +25,8 @@ test.describe('Exam packs and topics', { tag: '@smoke' }, () => {
     const name = `${competition.name} Grade ${grade}`;
 
     const user = await accounts.staff('SYSTEM_ADMIN');
-    await signIn(page, user.email, user.password);
-    await page.goto('/staff/exam-packs');
+    await signInStaff(page, user.email, user.password);
+    await page.goto(adminSite('/exam-packs'));
 
     const form = page.getByRole('form', { name: 'New exam pack' });
     await form.getByLabel('Grade').selectOption({ label: `Grade ${grade}` });
@@ -59,8 +59,8 @@ test.describe('Exam packs and topics', { tag: '@smoke' }, () => {
     const shared = unique('Time');
     const asmoOnly = unique('Geometry');
 
-    await signIn(page, creator.email, creator.password);
-    await page.goto('/staff/topics');
+    await signInStaff(page, creator.email, creator.password);
+    await page.goto(adminSite('/topics'));
     const form = page.getByRole('form', { name: 'Add a topic' });
 
     const addTopic = async (nameEn: string, competition: string) => {
@@ -88,8 +88,8 @@ test.describe('Exam packs and topics', { tag: '@smoke' }, () => {
     // Reviewers do not manage topics.
     const reviewer = await accounts.staff('REVIEWER');
     const reviewerPage = await newBrowser();
-    await signIn(reviewerPage, reviewer.email, reviewer.password);
-    await reviewerPage.goto('/staff/topics');
+    await signInStaff(reviewerPage, reviewer.email, reviewer.password);
+    await reviewerPage.goto(adminSite('/topics'));
     await expect(reviewerPage.getByRole('heading', { name: 'Access denied' })).toBeVisible();
   });
 });

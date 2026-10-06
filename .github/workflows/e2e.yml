@@ -1,10 +1,10 @@
 name: E2E
 
 # Runs the browser tests against the whole app, started from the GHCR images
-# of vietmath-backend and vietmath-web (stack/docker-compose.yml).
+# of vietmath-backend, vietmath-web and vietmath-admin-web (stack/docker-compose.yml).
 #
 # Image tags, first match wins: the workflow inputs, the repository variables
-# E2E_BACKEND_TAG / E2E_WEB_TAG, then "latest" (the master branches).
+# E2E_BACKEND_TAG / E2E_WEB_TAG / E2E_ADMIN_WEB_TAG, then "latest" (the master branches).
 
 on:
   pull_request:
@@ -20,6 +20,9 @@ on:
         required: false
       web_tag:
         description: vietmath-web image tag
+        required: false
+      admin_web_tag:
+        description: vietmath-admin-web image tag
         required: false
       grep:
         description: Only tests matching this (e.g. @smoke, E2E-RW)
@@ -54,6 +57,7 @@ jobs:
     env:
       BACKEND_TAG: ${{ inputs.backend_tag || vars.E2E_BACKEND_TAG || 'latest' }}
       WEB_TAG: ${{ inputs.web_tag || vars.E2E_WEB_TAG || 'latest' }}
+      ADMIN_WEB_TAG: ${{ inputs.admin_web_tag || vars.E2E_ADMIN_WEB_TAG || 'latest' }}
       # Pull requests and pushes run the smoke suite; the nightly run everything.
       E2E_GREP: ${{ inputs.grep || (github.event_name == 'schedule' && '.') || '@smoke' }}
     steps:
