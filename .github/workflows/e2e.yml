@@ -4,12 +4,12 @@ name: E2E
 # of vietmath-backend and vietmath-web (stack/docker-compose.yml).
 #
 # Image tags, first match wins: the workflow inputs, the repository variables
-# E2E_BACKEND_TAG / E2E_WEB_TAG, then "latest" (the main branches).
+# E2E_BACKEND_TAG / E2E_WEB_TAG, then "latest" (the master branches).
 
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [master]
   schedule:
     # Nightly full run, 02:13 in Vietnam.
     - cron: '13 19 * * *'

@@ -71,7 +71,8 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
       expect(saved.answerChoices.find((c) => c.isCorrect)?.label).toBe('B');
       expect(saved.promptTextEn).toBe(content === 'image-only' ? null : prompt);
       if (content !== 'text-only') {
-        // Stored under a content hash and served by the app (a CDN in production).
+        // Stored under a content hash on the server's disk and served by the app itself
+        // (the MVP has no CDN), with a one-year immutable cache.
         expect(saved.promptImageUrl).toMatch(
           /\/api\/v1\/media\/questions\/[0-9a-f]{16,}\.(png|jpg)$/,
         );

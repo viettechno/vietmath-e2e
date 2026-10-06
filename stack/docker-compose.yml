@@ -1,5 +1,5 @@
-# The whole VietMath app for end-to-end tests: the staging VM stack
-# (vietmath-infra/vm) plus Mailpit, which catches the OTP emails so tests can
+# The whole VietMath app for end-to-end tests: the VM stack that staging and
+# production run (vietmath-infra/vm) plus Mailpit, which catches the OTP emails so tests can
 # read the codes.
 #
 #   Playwright ──▶ caddy :8080 ──/api/*──▶ api ──▶ postgres, redis, media

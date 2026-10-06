@@ -5,7 +5,7 @@ tested together as a user sees them. Written in **TypeScript** with
 **[Playwright](https://playwright.dev)**.
 
 The scenarios are described step by step in
-[`vietmath-docs/08_E2E_Test_Scenarios.md`](https://github.com/viettechno/vietmath-docs/blob/main/08_E2E_Test_Scenarios.md).
+[`vietmath-docs/08_E2E_Test_Scenarios.md`](https://github.com/viettechno/vietmath-docs/blob/master/08_E2E_Test_Scenarios.md).
 Each test's title starts with its scenario ID (e.g. `E2E-RW-04`), so a failing test
 points to the manual steps it automates.
 
@@ -95,6 +95,8 @@ E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… npx playwright test
 
 This leaves test accounts, topics, questions and one exam pack per run on staging.
 
+**Never run the suite against production** (also a single VM in Vietnam, the same stack): it creates accounts, questions and exam packs. After a release, check production by hand with the read-only scenarios `E2E-SYS-01`, `E2E-SYS-02` and `E2E-I18N-01` of the scenarios document.
+
 ## Writing tests
 
 - **One scenario, one test**, titled `E2E-<AREA>-<NN> · <scenario name>`, tagged `@smoke`
@@ -119,7 +121,7 @@ This leaves test accounts, topics, questions and one exam pack per run on stagin
 
 ```
 playwright.config.ts   projects, timeouts, reporters
-stack/                 the app for the tests: staging VM stack + Mailpit
+stack/                 the app for the tests: the VM stack (staging and production use it too) + Mailpit
 scripts/               stack-up.sh, stack-down.sh
 support/
   env.ts               settings from environment variables
@@ -136,11 +138,11 @@ assets/                images for the question bank tests
 
 `.github/workflows/e2e.yml` starts the stack from GHCR images and runs the tests:
 
-| Trigger                      | Tests                          | Image tags                                                            |
-| ---------------------------- | ------------------------------ | --------------------------------------------------------------------- |
-| Pull request, push to `main` | `@smoke`                       | repository variables `E2E_BACKEND_TAG` / `E2E_WEB_TAG`, else `latest` |
-| Nightly (02:13 Vietnam time) | everything                     | same                                                                  |
-| Run workflow (manual)        | `grep` input, default `@smoke` | `backend_tag` / `web_tag` inputs                                      |
+| Trigger                        | Tests                          | Image tags                                                            |
+| ------------------------------ | ------------------------------ | --------------------------------------------------------------------- |
+| Pull request, push to `master` | `@smoke`                       | repository variables `E2E_BACKEND_TAG` / `E2E_WEB_TAG`, else `latest` |
+| Nightly (02:13 Vietnam time)   | everything                     | same                                                                  |
+| Run workflow (manual)          | `grep` input, default `@smoke` | `backend_tag` / `web_tag` inputs                                      |
 
 The HTML report, traces, videos and the app log are uploaded as the
 `playwright-report` artifact.
