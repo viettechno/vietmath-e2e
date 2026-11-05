@@ -91,7 +91,7 @@ Point the tests at the staging VM. Staging has no Mailpit, so the tests that rea
 email codes are skipped:
 
 ```bash
-E2E_BASE_URL=https://staging.vietmath.vn E2E_ADMIN_URL=https://admin.staging.vietmath.vn E2E_MAILPIT_URL= \
+E2E_BASE_URL=https://vietmath-staging.viettechno.com E2E_ADMIN_URL=https://vietmath-admin-staging.viettechno.com E2E_MAILPIT_URL= \
 E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… npx playwright test
 ```
 
