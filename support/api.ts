@@ -160,6 +160,8 @@ export const publicApi = {
     call<AuthResponse>('/auth/register/verify-otp', post({ userId, otpCode, deviceType })),
   login: (email: string, password: string, deviceType: DeviceType = 'MOBILE') =>
     call<AuthResponse>('/auth/login', post({ email, password, deviceType })),
+  /** Asks for a password-reset code; the answer is the same for an unknown address. */
+  forgotPassword: (email: string) => call<unknown>('/auth/forgot-password', post({ email })),
 };
 
 /** Calls made as a signed-in user. */
@@ -183,6 +185,8 @@ export class Api {
   }
 
   // Users
+
+  me = () => this.call<User>('/users/me');
 
   setLanguage = (preferredLanguage: Lang) =>
     this.call<User>('/users/me', patch({ preferredLanguage }));

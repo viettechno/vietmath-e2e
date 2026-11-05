@@ -13,11 +13,36 @@ interface SearchResult {
   messages: MailpitMessage[];
 }
 
+/**
+ * The Mailpit of a staging sits behind a login: E2E_MAILPIT_URL may carry it as
+ * https://user:password@host. fetch refuses credentials in a URL, so they go in a header.
+ */
+export function mailpitRequest(path: string): { url: string; headers: Record<string, string> } {
+  const url = new URL(env.mailpitURL + path);
+  const headers: Record<string, string> = {};
+  if (url.username) {
+    const login = `${decodeURIComponent(url.username)}:${decodeURIComponent(url.password)}`;
+    headers.Authorization = `Basic ${Buffer.from(login).toString('base64')}`;
+    url.username = '';
+    url.password = '';
+  }
+  return { url: url.toString(), headers };
+}
+
 async function search(address: string): Promise<SearchResult> {
   const query = encodeURIComponent(`to:"${address}"`);
-  const res = await fetch(`${env.mailpitURL}/api/v1/search?query=${query}&limit=50`);
+  const request = mailpitRequest(`/api/v1/search?query=${query}&limit=50`);
+  const res = await fetch(request.url, { headers: request.headers });
   if (!res.ok) throw new Error(`Mailpit search failed: ${res.status}`);
   return (await res.json()) as SearchResult;
+}
+
+/** The Mailpit address without its login, for messages. */
+export function mailpitAddress(): string {
+  const url = new URL(env.mailpitURL);
+  url.username = '';
+  url.password = '';
+  return url.toString().replace(/\/$/, '');
 }
 
 /** Whether the tests can read emails (a Mailpit URL is configured). */
