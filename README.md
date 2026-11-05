@@ -143,7 +143,7 @@ assets/                images for the question bank tests
 | Trigger                        | Tests                          | Image tags                                                                                  |
 | ------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------- |
 | Pull request, push to `master` | `@smoke`                       | repository variables `E2E_BACKEND_TAG` / `E2E_WEB_TAG` / `E2E_ADMIN_WEB_TAG`, else `latest` |
-| Nightly (02:13 Vietnam time)   | everything                     | same                                                                                        |
+| Weekly (Sunday 08:00 Vietnam)  | everything                     | same                                                                                        |
 | Run workflow (manual)          | `grep` input, default `@smoke` | `backend_tag` / `web_tag` / `admin_web_tag` inputs                                          |
 
 The HTML report, traces, videos and the app log are uploaded as the
