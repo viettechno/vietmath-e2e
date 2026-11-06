@@ -1,13 +1,16 @@
 name: E2E (staging)
 
-# Runs the browser tests against the staging deployment, on demand (after a
-# staging deploy) and every Sunday at 01:30 UTC (08:30 in Vietnam), after the
-# blackbox tests of vietmath-backend (01:00 UTC). Nothing is started here: the
+# Runs the browser tests against the staging deployment: every Sunday at 01:30
+# UTC (08:30 in Vietnam), after the blackbox tests of vietmath-backend (01:00
+# UTC), and when started by hand (Actions → Run workflow), e.g. after a staging
+# deploy. Nothing is started here: the
 # tests drive the staging web apps. The values come from repository secrets;
 # `make blackbox-env` in vietmath-infra/staging prints the inbox one:
 #   E2E_STAGING_BASE_URL       the student web, e.g. https://vietmath-staging.viettechno.com
 #   E2E_STAGING_ADMIN_URL      the admin web, e.g. https://vietmath-admin-staging.viettechno.com
 #   E2E_STAGING_MAILPIT_URL    https://blackbox:<password>@<the staging Mailpit host>
+#                              (percent-encode a password that has special characters; the
+#                              generated one is hex and needs nothing)
 #   E2E_STAGING_ADMIN_EMAIL    a System Admin of staging (make create-admin)
 #   E2E_STAGING_ADMIN_PASSWORD its password
 # The tests make their own users, topics and questions, with unique names, and
@@ -43,6 +46,11 @@ jobs:
       # The weekly run does everything; a manual run says what.
       E2E_GREP: ${{ inputs.grep || '.' }}
     steps:
+      - name: The secrets are set
+        run: |
+          for name in E2E_BASE_URL E2E_ADMIN_URL E2E_MAILPIT_URL E2E_ADMIN_EMAIL E2E_ADMIN_PASSWORD; do
+            [ -n "${!name}" ] || { echo "::error::The repository secret E2E_STAGING_${name#E2E_} is not set (see the header of this workflow)"; exit 1; }
+          done
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:

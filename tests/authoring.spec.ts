@@ -164,10 +164,7 @@ test.describe('Authoring a question', () => {
     await page.getByRole('button', { name: 'Remove image' }).first().click();
     const prompt = page.getByLabel('Question (English)');
     await prompt.fill('What time is it?');
-    await pasteImage(
-      prompt,
-      'assets/photo.jpg'.replace('.jpg', '.png').replace('photo', 'two-dots'),
-    );
+    await pasteImage(prompt, 'assets/two-dots.png');
     await expect(page.getByLabel('Illustration: Replace image')).toBeAttached({ timeout: 20_000 });
     await expect(prompt).toHaveValue('What time is it?');
 
@@ -217,6 +214,7 @@ test.describe('Authoring a question', () => {
     await page.getByRole('button', { name: 'Add constraint' }).click();
     const constraint = page.getByLabel('Constraint 1', { exact: true });
     await constraint.click();
+    await expect(toolbar(page)).toHaveCount(1); // the previous field's buttons go once the click is done
     await toolbar(page).getByRole('button', { name: 'Insert variable a' }).click();
     await constraint.pressSequentially(' > ');
     await toolbar(page).getByRole('button', { name: 'Insert function max' }).click();
@@ -224,6 +222,7 @@ test.describe('Authoring a question', () => {
 
     const formula = page.getByLabel('Answer A formula');
     await formula.click();
+    await expect(toolbar(page)).toHaveCount(1);
     await toolbar(page).getByRole('button', { name: 'Insert function abs' }).click();
     await expect(formula).toHaveValue('abs()');
   });
