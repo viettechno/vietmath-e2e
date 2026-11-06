@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 import { apiURL } from './env';
 
 /**
- * A small client for the VietMath REST API (vietmath-docs/06_API_Specifications.md).
+ * A small client for the VietMath REST API (vietmath-docs/docs/en/06_API_Specifications.md).
  * Tests use it to set up data quickly; the behaviour under test goes through
  * the browser.
  */

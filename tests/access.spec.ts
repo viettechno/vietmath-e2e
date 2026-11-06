@@ -18,7 +18,7 @@ const PAGES = [
   '/account',
 ] as const;
 
-/** Which pages each role may open (vietmath-docs/08_E2E_Test_Scenarios.md, E2E-ACL-01). */
+/** Which pages each role may open (vietmath-docs/docs/en/08_E2E_Test_Scenarios.md, E2E-ACL-01). */
 const ALLOWED: Record<Who, readonly (typeof PAGES)[number][]> = {
   'signed out': [],
   CONTENT_CREATOR: ['/', '/questions', '/questions/new', '/content-gaps', '/topics', '/account'],

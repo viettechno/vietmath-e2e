@@ -5,7 +5,7 @@ tested together as a user sees them. Written in **TypeScript** with
 **[Playwright](https://playwright.dev)**.
 
 The scenarios are described step by step in
-[`vietmath-docs/08_E2E_Test_Scenarios.md`](https://github.com/viettechno/vietmath-docs/blob/master/08_E2E_Test_Scenarios.md).
+[`vietmath-docs/docs/en/08_E2E_Test_Scenarios.md`](https://github.com/viettechno/vietmath-docs/blob/master/docs/en/08_E2E_Test_Scenarios.md).
 Each test's title starts with its scenario ID (e.g. `E2E-RW-04`), so a failing test
 points to the manual steps it automates.
 
