@@ -13,6 +13,7 @@ points to the manual steps it automates.
 | --------------------------------------------------------- | ------------------------------------------- |
 | Browser end-to-end, web + API together                    | **here**                                    |
 | API end-to-end (Go, real server + PostgreSQL, no browser) | `vietmath-backend/cmd/server/*_e2e_test.go` |
+| Blackbox: business workflows through the public API       | `vietmath-backend/testing/blackbox`         |
 | Unit and component tests                                  | `vietmath-backend`, `vietmath-web`          |
 
 ## What is automated
@@ -36,8 +37,24 @@ covers every Release Phase 1, 2 and 3 acceptance criterion through the browser:
 | `tests/access.spec.ts`        | ACL-01 (each role)                                              |
 | `tests/templates.spec.ts`     | PAR-01, PAR-02, PAR-03, PAR-04 (templates)                      |
 
-Waves 2 (regression) and 3 (slow, real OTP expiry) are listed in §15.3 of the scenarios
-document.
+Wave 2, the **regression** specs (no tag; the weekly run does them): the parts that only the
+browser can show.
+
+| Spec                           | Scenarios                                                    |
+| ------------------------------ | ------------------------------------------------------------ |
+| `tests/navigation.spec.ts`     | LOGIN-04, LOGIN-06, BRW-03, SYS-03 (on a phone)              |
+| `tests/language.spec.ts`       | I18N-02, I18N-03 (the language of the UI and of the e-mails) |
+| `tests/admin-language.spec.ts` | I18N-04 (every admin web page, in Vietnamese and in English) |
+| `tests/authoring.spec.ts`      | QB-03, QB-09 (math), QB-10 (drag and paste), PAR-08, RW-02   |
+
+**What the API tests cover instead.** The workflows behind the screens (registration and its
+rules, sessions, passwords, Google on the phone, staff accounts and roles, the catalog,
+question validation, the review workflow with who may do what, the content-gap counts and
+templates) are checked through the API by the blackbox suite of `vietmath-backend`, which is
+faster and steadier; a browser spec only needs the UI part of them. Google sign-in in the
+browser (GGL-04, PWD-04) needs the real Google and stays manual. Wave 3 (slow, real code
+expiry) runs in the blackbox suite with `BLACKBOX_SLOW=1`. The scenarios document maps every
+scenario to the suite that runs it (§15.3a).
 
 ## Run the tests on your computer
 
@@ -87,11 +104,14 @@ Useful while debugging:
 
 ### Against staging
 
-Point the tests at the staging VM. Staging has no Mailpit, so the tests that read
-email codes are skipped:
+Point the tests at the staging VM. Staging sends all its e-mail to a Mailpit (the test
+inbox, `vietmath-infra/staging`), so the tests that read codes work too; its login goes in the
+URL (`make blackbox-env` in `vietmath-infra/staging` prints it). The **E2E (staging)**
+workflow does this from GitHub Actions:
 
 ```bash
-E2E_BASE_URL=https://vietmath-staging.viettechno.com E2E_ADMIN_URL=https://vietmath-admin-staging.viettechno.com E2E_MAILPIT_URL= \
+E2E_BASE_URL=https://vietmath-staging.viettechno.com E2E_ADMIN_URL=https://vietmath-admin-staging.viettechno.com \
+E2E_MAILPIT_URL=https://blackbox:<password>@vietmath-mailpit-staging.viettechno.com \
 E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… npx playwright test
 ```
 
@@ -148,6 +168,12 @@ assets/                images for the question bank tests
 
 The HTML report, traces, videos and the app log are uploaded as the
 `playwright-report` artifact.
+
+`.github/workflows/e2e-staging.yml` (**E2E (staging)**) runs the tests against the staging
+deployment instead of a stack of its own: on demand (`grep` input, default `@smoke`) and every
+Sunday at 08:30 Vietnam time, after the blackbox tests (08:00). It reads the addresses and
+logins from the secrets `E2E_STAGING_BASE_URL`, `E2E_STAGING_ADMIN_URL`,
+`E2E_STAGING_MAILPIT_URL`, `E2E_STAGING_ADMIN_EMAIL` and `E2E_STAGING_ADMIN_PASSWORD`.
 
 ### CI setup (once)
 

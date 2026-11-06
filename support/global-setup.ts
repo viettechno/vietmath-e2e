@@ -1,3 +1,4 @@
+import { mailpitAddress, mailpitRequest } from './mailpit';
 import { publicApi } from './api';
 import { env } from './env';
 
@@ -27,10 +28,11 @@ export default async function globalSetup() {
   }
 
   if (env.mailpitURL) {
-    const res = await fetch(`${env.mailpitURL}/api/v1/info`).catch(() => undefined);
+    const request = mailpitRequest('/api/v1/info');
+    const res = await fetch(request.url, { headers: request.headers }).catch(() => undefined);
     if (!res?.ok) {
       throw new Error(
-        `Mailpit is not reachable at ${env.mailpitURL}. Set E2E_MAILPIT_URL= (empty) to skip the tests that read emails.`,
+        `Mailpit is not reachable at ${mailpitAddress()}. Set E2E_MAILPIT_URL= (empty) to skip the tests that read emails.`,
       );
     }
   }
