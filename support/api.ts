@@ -104,6 +104,41 @@ export interface Question extends QuestionInput {
   status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'ARCHIVED';
 }
 
+export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
+
+/** A mock exam blueprint (API Specifications §8). */
+export interface Blueprint {
+  id: string;
+  examPackId: string;
+  name: string;
+  status: 'DRAFT' | 'ACTIVE' | 'RETIRED';
+  totalQuestions: number;
+  timeLimitMinutes: number;
+  topicDistribution: { topicId: string; count: number }[];
+  difficultyDistribution: { difficulty: Difficulty; count: number; points: number }[];
+  totalPoints: number;
+}
+
+export interface BlueprintInput {
+  examPackId: string;
+  name: string;
+  totalQuestions: number;
+  timeLimitMinutes: number;
+  status?: Blueprint['status'];
+  topicDistribution: { topicId: string; count: number }[];
+  difficultyDistribution?: { difficulty: Difficulty; count: number; points?: number }[];
+}
+
+export interface Readiness {
+  ready: boolean;
+  poolSize: number;
+  shortfalls: {
+    kind: 'TOPIC' | 'DIFFICULTY' | 'COMBINATION';
+    required: number;
+    available: number;
+  }[];
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -239,6 +274,13 @@ export class Api {
     action: 'submit-review' | 'approve' | 'request-changes' | 'archive' | 'restore',
     input: { note?: string } = {},
   ) => this.call<Question>(`/questions/${id}/${action}`, post(input));
+
+  // Mock exam blueprints
+
+  createBlueprint = (input: BlueprintInput) =>
+    this.call<Blueprint>('/mock-exam-templates', post(input));
+
+  readiness = (id: string) => this.call<Readiness>(`/mock-exam-templates/${id}/readiness`);
 
   uploadImage = async (path: string, type: string) => {
     const form = new FormData();
