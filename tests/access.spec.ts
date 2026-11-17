@@ -15,20 +15,31 @@ const PAGES = [
   '/content-gaps',
   '/topics',
   '/exam-packs',
+  '/mock-exams',
+  '/mock-exams/new',
   '/account',
 ] as const;
 
 /** Which pages each role may open (vietmath-docs/docs/en/08_E2E_Test_Scenarios.md, E2E-ACL-01). */
 const ALLOWED: Record<Who, readonly (typeof PAGES)[number][]> = {
   'signed out': [],
-  CONTENT_CREATOR: ['/', '/questions', '/questions/new', '/content-gaps', '/topics', '/account'],
-  REVIEWER: ['/', '/questions', '/review', '/content-gaps', '/account'],
+  CONTENT_CREATOR: [
+    '/',
+    '/questions',
+    '/questions/new',
+    '/content-gaps',
+    '/topics',
+    '/mock-exams',
+    '/mock-exams/new',
+    '/account',
+  ],
+  REVIEWER: ['/', '/questions', '/review', '/content-gaps', '/mock-exams', '/account'],
   SYSTEM_ADMIN: PAGES.filter((p) => p !== '/questions/new'),
 };
 
 const SIDEBAR: Partial<Record<Who, string[]>> = {
-  CONTENT_CREATOR: ['Dashboard', 'Question bank', 'Content gaps', 'Topics'],
-  REVIEWER: ['Dashboard', 'Question bank', 'Review queue', 'Content gaps'],
+  CONTENT_CREATOR: ['Dashboard', 'Question bank', 'Content gaps', 'Topics', 'Mock exams'],
+  REVIEWER: ['Dashboard', 'Question bank', 'Review queue', 'Content gaps', 'Mock exams'],
   SYSTEM_ADMIN: [
     'Dashboard',
     'Users',
@@ -37,6 +48,7 @@ const SIDEBAR: Partial<Record<Who, string[]>> = {
     'Content gaps',
     'Topics',
     'Exam packs',
+    'Mock exams',
   ],
 };
 

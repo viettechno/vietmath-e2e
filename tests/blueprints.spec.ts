@@ -42,65 +42,64 @@ async function openBlueprint(page: Page, name: string) {
 }
 
 test.describe('Mock exam blueprints', () => {
-  test(
-    'E2E-BLP-01 · Create a blueprint',
-    { tag: '@smoke' },
-    async ({ page, accounts, asmoPack, newTopic }) => {
-      const creator = await accounts.staff('CONTENT_CREATOR');
-      const time = await newTopic();
-      const geometry = await newTopic();
-      const name = unique('Standard mock');
+  test('E2E-BLP-01 · Create a blueprint', async ({ page, accounts, asmoPack, newTopic }) => {
+    const creator = await accounts.staff('CONTENT_CREATOR');
+    const time = await newTopic();
+    const geometry = await newTopic();
+    const name = unique('Standard mock');
 
-      await signInStaff(page, creator.email, creator.password);
-      await page
-        .getByRole('navigation', { name: 'Staff navigation' })
-        .getByRole('link', { name: 'Mock exams' })
-        .click();
-      await page.getByRole('link', { name: 'New blueprint' }).click();
+    await signInStaff(page, creator.email, creator.password);
+    await page
+      .getByRole('navigation', { name: 'Staff', exact: true })
+      .getByRole('link', { name: 'Mock exams' })
+      .click();
+    await page.getByRole('link', { name: 'New blueprint' }).click();
 
-      const form = page.getByRole('form', { name: 'New blueprint' });
-      await form.getByLabel('Exam pack').selectOption({ label: asmoPack.name });
-      await form.getByLabel('Name').fill(name);
-      await form.getByLabel('Total questions').fill('10');
-      await form.getByLabel('Time limit (minutes)').fill('30');
+    const form = page.getByRole('form', { name: 'New blueprint' });
+    await form.getByLabel('Exam pack', { exact: true }).selectOption({ label: asmoPack.name });
+    await form.getByLabel('Name', { exact: true }).fill(name);
+    await form.getByLabel('Total questions', { exact: true }).fill('10');
+    await form.getByLabel('Time limit (minutes)', { exact: true }).fill('30');
 
-      await form.getByRole('button', { name: 'Add topic' }).click();
-      await form.getByLabel('Topic 1').selectOption({ label: time.nameEn });
-      await form.getByLabel('Questions 1').fill('4');
-      await form.getByRole('button', { name: 'Add topic' }).click();
-      await form.getByLabel('Topic 2').selectOption({ label: geometry.nameEn });
-      await form.getByLabel('Questions 2').fill('6');
-      await expect(form.getByText('10 of 10 questions').first()).toBeVisible();
+    await form.getByRole('button', { name: 'Add topic' }).click();
+    await form.getByLabel('Topic 1', { exact: true }).selectOption({ label: time.nameEn });
+    await form.getByLabel('Questions 1', { exact: true }).fill('4');
+    await form.getByRole('button', { name: 'Add topic' }).click();
+    await form.getByLabel('Topic 2', { exact: true }).selectOption({ label: geometry.nameEn });
+    await form.getByLabel('Questions 2', { exact: true }).fill('6');
+    await expect(form.getByText('10 of 10 questions').first()).toBeVisible();
 
-      await form.getByLabel(/Set the number of questions and the points/).check();
-      for (const [label, count, points] of [
-        ['Easy', '5', '1'],
-        ['Medium', '3', '2'],
-        ['Hard', '2', '3'],
-      ] as const) {
-        await form.getByLabel(`${label}: Questions`).fill(count);
-        await form.getByLabel(`${label}: Points per question`).fill(points);
-      }
-      await expect(form.getByText('Total points: 17')).toBeVisible();
+    await form.getByLabel(/Set the number of questions and the points/).check();
+    for (const [label, count, points] of [
+      ['Easy', '5', '1'],
+      ['Medium', '3', '2'],
+      ['Hard', '2', '3'],
+    ] as const) {
+      await form.getByLabel(`${label}: Questions`, { exact: true }).fill(count);
+      await form.getByLabel(`${label}: Points per question`, { exact: true }).fill(points);
+    }
+    await expect(form.getByText('Total points: 17')).toBeVisible();
 
-      await form.getByRole('button', { name: 'Save' }).click();
-      await expectNotice(page, 'Blueprint saved.');
-      await expect(page).toHaveURL(/\/mock-exams\/[0-9a-f-]{36}$/);
+    await form.getByRole('button', { name: 'Save' }).click();
+    await expectNotice(page, 'Blueprint saved.');
+    await expect(page).toHaveURL(/\/mock-exams\/[0-9a-f-]{36}$/);
 
-      // It is listed as a draft, and opens again with every value.
-      await page.goto(adminSite('/mock-exams'));
-      const row = page.getByRole('row').filter({ hasText: name });
-      await expect(row).toContainText('Draft');
-      await expect(row).toContainText('30 min');
-      await expect(row).toContainText('17');
+    // It is listed as a draft, and opens again with every value.
+    await page.goto(adminSite('/mock-exams'));
+    const row = page.getByRole('row').filter({ hasText: name });
+    await expect(row).toContainText('Draft');
+    await expect(row).toContainText('30 min');
+    await expect(row).toContainText('17');
 
-      await openBlueprint(page, name);
-      const edit = page.getByRole('form', { name: 'Edit blueprint' });
-      await expect(edit.getByLabel('Total questions')).toHaveValue('10');
-      await expect(edit.getByLabel('Topic 2')).toHaveValue(geometry.id);
-      await expect(edit.getByLabel('Medium: Points per question')).toHaveValue('2');
-    },
-  );
+    await openBlueprint(page, name);
+    const edit = page.getByRole('form', { name: 'Edit blueprint' });
+    await expect(edit.getByLabel('Total questions', { exact: true })).toHaveValue('10');
+    // The topics come back in the order they are stored (by id).
+    const [first, second] = [time.id, geometry.id].sort();
+    await expect(edit.getByLabel('Topic 1', { exact: true })).toHaveValue(first!);
+    await expect(edit.getByLabel('Topic 2', { exact: true })).toHaveValue(second!);
+    await expect(edit.getByLabel('Medium: Points per question', { exact: true })).toHaveValue('2');
+  });
 
   test('E2E-BLP-02 · The distributions must add up', async ({
     page,
@@ -117,16 +116,16 @@ test.describe('Mock exam blueprints', () => {
     const form = page.getByRole('form', { name: 'New blueprint' });
     const save = form.getByRole('button', { name: 'Save' });
 
-    await form.getByLabel('Exam pack').selectOption({ label: asmoPack.name });
-    await form.getByLabel('Name').fill(unique('Short'));
-    await form.getByLabel('Total questions').fill('10');
-    await form.getByLabel('Time limit (minutes)').fill('30');
+    await form.getByLabel('Exam pack', { exact: true }).selectOption({ label: asmoPack.name });
+    await form.getByLabel('Name', { exact: true }).fill(unique('Short'));
+    await form.getByLabel('Total questions', { exact: true }).fill('10');
+    await form.getByLabel('Time limit (minutes)', { exact: true }).fill('30');
     await form.getByRole('button', { name: 'Add topic' }).click();
-    await form.getByLabel('Topic 1').selectOption({ label: time.nameEn });
-    await form.getByLabel('Questions 1').fill('4');
+    await form.getByLabel('Topic 1', { exact: true }).selectOption({ label: time.nameEn });
+    await form.getByLabel('Questions 1', { exact: true }).fill('4');
     await form.getByRole('button', { name: 'Add topic' }).click();
-    await form.getByLabel('Topic 2').selectOption({ label: geometry.nameEn });
-    await form.getByLabel('Questions 2').fill('5');
+    await form.getByLabel('Topic 2', { exact: true }).selectOption({ label: geometry.nameEn });
+    await form.getByLabel('Questions 2', { exact: true }).fill('5');
 
     await expect(form.getByText('9 of 10 questions').first()).toBeVisible();
     await expect(save).toBeDisabled();
@@ -134,34 +133,34 @@ test.describe('Mock exam blueprints', () => {
 
     // A topic can be chosen once: it is gone from the other line's choices.
     await expect(
-      form.getByLabel('Topic 2').locator('option', { hasText: time.nameEn }),
+      form.getByLabel('Topic 2', { exact: true }).locator('option', { hasText: time.nameEn }),
     ).toHaveCount(0);
 
-    await form.getByLabel('Questions 2').fill('6');
+    await form.getByLabel('Questions 2', { exact: true }).fill('6');
     await expect(save).toBeEnabled();
 
     await form.getByLabel(/Set the number of questions and the points/).check();
     await expect(save).toBeDisabled();
-    await form.getByLabel('Easy: Questions').fill('5');
-    await form.getByLabel('Medium: Questions').fill('3');
-    await form.getByLabel('Hard: Questions').fill('0');
+    await form.getByLabel('Easy: Questions', { exact: true }).fill('5');
+    await form.getByLabel('Medium: Questions', { exact: true }).fill('3');
+    await form.getByLabel('Hard: Questions', { exact: true }).fill('0');
     await expect(form.getByText('8 of 10 questions').first()).toBeVisible();
     await expect(form.getByText('The difficulty counts must add up to the total.')).toBeVisible();
-    await form.getByLabel('Hard: Questions').fill('2');
-    await form.getByLabel('Hard: Points per question').fill('0');
+    await form.getByLabel('Hard: Questions', { exact: true }).fill('2');
+    await form.getByLabel('Hard: Points per question', { exact: true }).fill('0');
     await expect(save).toBeDisabled();
-    await form.getByLabel('Hard: Points per question').fill('3');
+    await form.getByLabel('Hard: Points per question', { exact: true }).fill('3');
     await expect(save).toBeEnabled();
 
-    await form.getByLabel('Total questions').fill('101');
+    await form.getByLabel('Total questions', { exact: true }).fill('101');
     await expect(
       form.getByText('Total questions must be a whole number from 1 to 100.'),
     ).toBeVisible();
-    await form.getByLabel('Total questions').fill('10');
-    await form.getByLabel('Time limit (minutes)').fill('301');
+    await form.getByLabel('Total questions', { exact: true }).fill('10');
+    await form.getByLabel('Time limit (minutes)', { exact: true }).fill('301');
     await expect(form.getByText('The time limit must be from 1 to 300 minutes.')).toBeVisible();
-    await form.getByLabel('Time limit (minutes)').fill('30');
-    await form.getByLabel('Name').fill('');
+    await form.getByLabel('Time limit (minutes)', { exact: true }).fill('30');
+    await form.getByLabel('Name', { exact: true }).fill('');
     await expect(form.getByText('Enter a name.')).toBeVisible();
   });
 
@@ -223,76 +222,72 @@ test.describe('Mock exam blueprints', () => {
     await expect(page.getByRole('row').filter({ hasText: blueprint.name })).toContainText('Ready');
   });
 
-  test(
-    'E2E-BLP-05 · Generate a sample exam',
-    { tag: '@smoke' },
-    async ({ page, accounts, asmoPack, newTopic }) => {
-      const creator = await accounts.staff('CONTENT_CREATOR');
-      const reviewer = await accounts.staff('REVIEWER');
-      const time = await newTopic();
-      const geometry = await newTopic();
-      const blueprint = await creator.api.createBlueprint({
-        examPackId: asmoPack.id,
-        name: unique('Sample mock'),
-        totalQuestions: 6,
-        timeLimitMinutes: 20,
-        topicDistribution: [
-          { topicId: time.id, count: 2 },
-          { topicId: geometry.id, count: 4 },
-        ],
-        difficultyDistribution: [
-          { difficulty: 'EASY', count: 3, points: 1 },
-          { difficulty: 'MEDIUM', count: 2, points: 2 },
-          { difficulty: 'HARD', count: 1, points: 3 },
-        ],
-      });
+  test('E2E-BLP-05 · Generate a sample exam', async ({ page, accounts, asmoPack, newTopic }) => {
+    const creator = await accounts.staff('CONTENT_CREATOR');
+    const reviewer = await accounts.staff('REVIEWER');
+    const time = await newTopic();
+    const geometry = await newTopic();
+    const blueprint = await creator.api.createBlueprint({
+      examPackId: asmoPack.id,
+      name: unique('Sample mock'),
+      totalQuestions: 6,
+      timeLimitMinutes: 20,
+      topicDistribution: [
+        { topicId: time.id, count: 2 },
+        { topicId: geometry.id, count: 4 },
+      ],
+      difficultyDistribution: [
+        { difficulty: 'EASY', count: 3, points: 1 },
+        { difficulty: 'MEDIUM', count: 2, points: 2 },
+        { difficulty: 'HARD', count: 1, points: 3 },
+      ],
+    });
 
-      for (const topic of [time, geometry]) {
-        for (const difficulty of ['EASY', 'MEDIUM', 'HARD'] as const) {
-          await publish(creator, reviewer, asmoPack, topic, difficulty, 4);
-        }
+    for (const topic of [time, geometry]) {
+      for (const difficulty of ['EASY', 'MEDIUM', 'HARD'] as const) {
+        await publish(creator, reviewer, asmoPack, topic, difficulty, 4);
       }
+    }
 
-      await signInStaff(page, creator.email, creator.password);
-      await openBlueprint(page, blueprint.name);
+    await signInStaff(page, creator.email, creator.password);
+    await openBlueprint(page, blueprint.name);
 
-      const panel = page.getByRole('region', { name: 'Sample exam' });
-      const generate = panel.getByRole('button', { name: 'Generate sample exam' });
-      const questions = panel.locator('ol > li');
-      const seen = new Set<string>();
+    const panel = page.getByRole('region', { name: 'Sample exam' });
+    const generate = panel.getByRole('button', { name: 'Generate sample exam' });
+    const questions = panel.locator('ol > li');
+    const seen = new Set<string>();
 
-      for (let run = 0; run < 3; run++) {
-        await generate.click();
-        await expect(questions).toHaveCount(6);
-        await expect(panel).toContainText('6 questions · 20 min · 11 points');
+    for (let run = 0; run < 3; run++) {
+      await generate.click();
+      await expect(questions).toHaveCount(6);
+      await expect(panel).toContainText('6 questions · 20 min · 10 points');
 
-        // The counts are met together, and no question appears twice.
-        await expect(panel.getByText(new RegExp(`^${time.nameEn} · `))).toHaveCount(2);
-        await expect(panel.getByText(new RegExp(`^${geometry.nameEn} · `))).toHaveCount(4);
-        for (const [difficulty, n] of [
-          ['EASY', 3],
-          ['MEDIUM', 2],
-          ['HARD', 1],
-        ] as const) {
-          await expect(
-            panel.getByText(new RegExp(` · ${DIFFICULTY_LABEL[difficulty]} · `)),
-          ).toHaveCount(n);
-        }
-        const prompts = await questions.locator('p.mt-2').allTextContents();
-        expect(new Set(prompts).size).toBe(6);
-        await expect(questions.first()).toContainText('✓ Answer');
-        seen.add(prompts.join('|'));
+      // The counts are met together, and no question appears twice.
+      await expect(panel.getByText(new RegExp(`^${time.nameEn} · `))).toHaveCount(2);
+      await expect(panel.getByText(new RegExp(`^${geometry.nameEn} · `))).toHaveCount(4);
+      for (const [difficulty, n] of [
+        ['EASY', 3],
+        ['MEDIUM', 2],
+        ['HARD', 1],
+      ] as const) {
+        await expect(
+          panel.getByText(new RegExp(` · ${DIFFICULTY_LABEL[difficulty]} · `)),
+        ).toHaveCount(n);
       }
+      const prompts = await questions.locator('p.mt-2').allTextContents();
+      expect(new Set(prompts).size).toBe(6);
+      await expect(questions.first()).toContainText('✓ Answer');
+      seen.add(prompts.join('|'));
+    }
 
-      expect(seen.size, 'two generations differ').toBeGreaterThan(1);
+    expect(seen.size, 'two generations differ').toBeGreaterThan(1);
 
-      // Nothing is stored: a reload shows no sample.
-      await page.reload();
-      await expect(
-        page.getByRole('region', { name: 'Sample exam' }).locator('ol > li'),
-      ).toHaveCount(0);
-    },
-  );
+    // Nothing is stored: a reload shows no sample.
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'Sample exam' }).locator('ol > li')).toHaveCount(
+      0,
+    );
+  });
 
   test('E2E-BLP-06 · Not enough questions: no exam, a clear message', async ({
     page,
