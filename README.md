@@ -40,17 +40,18 @@ covers every Release Phase 1, 2 and 3 acceptance criterion through the browser:
 Wave 2, the **regression** specs (no tag; the weekly run does them): the parts that only the
 browser can show.
 
-| Spec                           | Scenarios                                                    |
-| ------------------------------ | ------------------------------------------------------------ |
-| `tests/navigation.spec.ts`     | LOGIN-04, LOGIN-06, BRW-03, SYS-03 (on a phone)              |
-| `tests/language.spec.ts`       | I18N-02, I18N-03 (the language of the UI and of the e-mails) |
-| `tests/admin-language.spec.ts` | I18N-04 (every admin web page, in Vietnamese and in English) |
-| `tests/authoring.spec.ts`      | QB-03, QB-09 (math), QB-10 (drag and paste), PAR-08, RW-02   |
+| Spec                           | Scenarios                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| `tests/navigation.spec.ts`     | LOGIN-04, LOGIN-06, BRW-03, SYS-03 (on a phone)                                           |
+| `tests/language.spec.ts`       | I18N-02, I18N-03 (the language of the UI and of the e-mails)                              |
+| `tests/admin-language.spec.ts` | I18N-04 (every admin web page, in Vietnamese and in English)                              |
+| `tests/authoring.spec.ts`      | QB-03, QB-09 (math), QB-10 (drag and paste), PAR-08, RW-02                                |
+| `tests/blueprints.spec.ts`     | BLP-01, BLP-02, BLP-04, BLP-05, BLP-06 (mock exam blueprints, the alert, the sample exam) |
 
 **What the API tests cover instead.** The workflows behind the screens (registration and its
 rules, sessions, passwords, Google on the phone, staff accounts and roles, the catalog,
-question validation, the review workflow with who may do what, the content-gap counts and
-templates) are checked through the API by the blackbox suite of `vietmath-backend`, which is
+question validation, the review workflow with who may do what, the content-gap counts,
+templates and the rules of mock exam blueprints) are checked through the API by the blackbox suite of `vietmath-backend`, which is
 faster and steadier; a browser spec only needs the UI part of them. Google sign-in in the
 browser (GGL-04, PWD-04) needs the real Google and stays manual. Wave 3 (slow, real code
 expiry) runs in the blackbox suite with `BLACKBOX_SLOW=1`. The scenarios document maps every
