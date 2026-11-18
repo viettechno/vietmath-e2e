@@ -38,6 +38,8 @@ export interface Competition {
 export interface Topic {
   id: string;
   competitionId: string | null;
+  parentId: string | null;
+  depth: number;
   nameEn: string;
   nameVi: string | null;
 }
@@ -87,7 +89,7 @@ export interface TemplateVariant {
 }
 
 export interface QuestionInput {
-  examPackId: string;
+  examPackIds: string[];
   topicIds: string[];
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   languageMode: 'EN' | 'EN_VI';
@@ -144,6 +146,7 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    readonly details: Record<string, unknown> = {},
   ) {
     super(`${status} ${code}: ${message}`);
   }
@@ -162,12 +165,13 @@ async function call<T>(
   const res = await fetch(`${apiURL}${path}`, { ...init, headers });
   if (res.status === 204) return undefined as T;
   const body = (await res.json().catch(() => undefined)) as
-    { error?: { code: string; message: string } } | undefined;
+    { error?: { code: string; message: string; details?: Record<string, unknown> } } | undefined;
   if (!res.ok) {
     throw new ApiError(
       res.status,
       body?.error?.code ?? 'UNKNOWN',
       body?.error?.message ?? res.statusText,
+      body?.error?.details,
     );
   }
   return body as T;
@@ -253,14 +257,25 @@ export class Api {
   updateExamPack = (id: string, input: { status?: PackStatus; price?: number }) =>
     this.call<ExamPack>(`/exam-packs/${id}`, patch(input));
 
-  createTopic = (input: { competitionId: string | null; nameEn: string; nameVi: string | null }) =>
-    this.call<Topic>('/topics', post(input));
+  createTopic = (input: {
+    competitionId?: string | null;
+    parentId?: string | null;
+    nameEn: string;
+    nameVi: string | null;
+  }) => this.call<Topic>('/topics', post(input));
+
+  topics = (competitionId?: string) =>
+    this.call<Topic[]>(competitionId ? `/topics?competitionId=${competitionId}` : '/topics');
 
   // Question bank
 
   createQuestion = (input: QuestionInput) => this.call<Question>('/questions', post(input));
 
   getQuestion = (id: string) => this.call<Question>(`/questions/${id}`);
+
+  /** Searches the bank: `query` is the query string without the leading "?". */
+  searchQuestions = (query: string) =>
+    this.call<{ items: Question[]; total: number }>(`/questions?${query}`);
 
   previewTemplate = (input: {
     promptTextEn: string;
