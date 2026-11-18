@@ -37,8 +37,8 @@ interface TestFixtures {
     /** A verified student or parent; needs Mailpit for the email code. */
     customer: (type?: 'STUDENT' | 'PARENT') => Promise<Account>;
   };
-  /** New topics for a competition (default: the ASMO pack's), unique to this test. */
-  newTopic: (competitionId?: string | null) => Promise<Topic>;
+  /** A new topic, unique to this test. Topics have no competition. */
+  newTopic: () => Promise<Topic>;
   /** Another browser (e.g. a second computer or a phone), closed after the test. */
   newBrowser: (options?: BrowserContextOptions) => Promise<Page>;
 }
@@ -149,10 +149,10 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     });
   },
 
-  newTopic: async ({ admin, asmoPack }, use) => {
-    await use((competitionId = asmoPack.competition.id) => {
+  newTopic: async ({ admin }, use) => {
+    await use(() => {
       const name = unique('Topic');
-      return admin.createTopic({ competitionId, nameEn: name, nameVi: `${name} (vi)` });
+      return admin.createTopic({ nameEn: name, nameVi: `${name} (vi)` });
     });
   },
 

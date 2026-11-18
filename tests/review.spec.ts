@@ -20,9 +20,9 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
   const history = (page: import('@playwright/test').Page) =>
     page.getByRole('region', { name: 'Review history' });
 
-  test('E2E-RW-01 · Submit and publish', async ({ page, newBrowser, asmoPack }) => {
+  test('E2E-RW-01 · Submit and publish', async ({ page, newBrowser }) => {
     const prompt = unique('How many sides does a triangle have');
-    const q = await creator.api.createQuestion(textQuestion(asmoPack.id, [topicId], prompt));
+    const q = await creator.api.createQuestion(textQuestion([topicId], prompt));
 
     await signInStaff(page, creator.email, creator.password);
     await page.goto(adminSite(`/questions/${q.id}`));
@@ -50,18 +50,17 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
   });
 
   /** A bilingual question with English text only, waiting for review. */
-  async function pendingWithoutVietnamese(examPackId: string): Promise<Question> {
+  async function pendingWithoutVietnamese(): Promise<Question> {
     const q = await creator.api.createQuestion(
-      textQuestion(examPackId, [topicId], unique('What time is it'), { languageMode: 'EN_VI' }),
+      textQuestion([topicId], unique('What time is it'), { languageMode: 'EN_VI' }),
     );
     return creator.api.act(q.id, 'submit-review');
   }
 
   test('E2E-RW-03 · A bilingual question cannot be published without Vietnamese', async ({
     page,
-    asmoPack,
   }) => {
-    const q = await pendingWithoutVietnamese(asmoPack.id);
+    const q = await pendingWithoutVietnamese();
 
     await signInStaff(page, reviewer.email, reviewer.password);
     await page.goto(adminSite(`/questions/${q.id}`));
@@ -78,8 +77,8 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
     expect((await reviewer.api.getQuestion(q.id)).status).toBe('PENDING_REVIEW');
   });
 
-  test('E2E-RW-04 · The reviewer edits and publishes in one action', async ({ page, asmoPack }) => {
-    const q = await pendingWithoutVietnamese(asmoPack.id);
+  test('E2E-RW-04 · The reviewer edits and publishes in one action', async ({ page }) => {
+    const q = await pendingWithoutVietnamese();
     const fixedPrompt = `${q.promptTextEn} (edited)`;
 
     await signInStaff(page, reviewer.email, reviewer.password);
@@ -107,12 +106,9 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
     ]);
   });
 
-  test('E2E-RW-07 · Archived questions leave default search results', async ({
-    page,
-    asmoPack,
-  }) => {
+  test('E2E-RW-07 · Archived questions leave default search results', async ({ page }) => {
     const prompt = unique('Which shape is round');
-    const q = await creator.api.createQuestion(textQuestion(asmoPack.id, [topicId], prompt));
+    const q = await creator.api.createQuestion(textQuestion([topicId], prompt));
     await creator.api.act(q.id, 'submit-review');
     await reviewer.api.act(q.id, 'approve');
 

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { Account } from '../support/fixtures';
-import type { Difficulty, ExamPack, Topic } from '../support/api';
+import type { Difficulty, Topic } from '../support/api';
 import { unique } from '../support/data';
 import { expect, test } from '../support/fixtures';
 import { adminSite, expectNotice, signInStaff } from '../support/pages/auth';
@@ -21,7 +21,6 @@ const DIFFICULTY_LABEL: Record<Difficulty, string> = {
 async function publish(
   creator: Account,
   reviewer: Account,
-  pack: ExamPack,
   topic: Topic,
   difficulty: Difficulty,
   n: number,
@@ -29,7 +28,7 @@ async function publish(
   const ids: string[] = [];
   for (let i = 0; i < n; i++) {
     const q = await creator.api.createQuestion(
-      textQuestion(pack.id, [topic.id], unique(`${topic.nameEn} ${difficulty}`), { difficulty }),
+      textQuestion([topic.id], unique(`${topic.nameEn} ${difficulty}`), { difficulty }),
     );
     await creator.api.act(q.id, 'submit-review');
     await reviewer.api.act(q.id, 'approve');
@@ -59,7 +58,7 @@ test.describe('Mock exam blueprints', () => {
     await page.getByRole('link', { name: 'New blueprint' }).click();
 
     const form = page.getByRole('form', { name: 'New blueprint' });
-    await form.getByLabel('Exam pack', { exact: true }).selectOption({ label: asmoPack.name });
+    await form.getByRole('checkbox', { name: asmoPack.name }).check();
     await form.getByLabel('Name', { exact: true }).fill(name);
     await form.getByLabel('Total questions', { exact: true }).fill('10');
     await form.getByLabel('Time limit (minutes)', { exact: true }).fill('30');
@@ -129,7 +128,7 @@ test.describe('Mock exam blueprints', () => {
     const form = page.getByRole('form', { name: 'New blueprint' });
     const save = form.getByRole('button', { name: 'Save' });
 
-    await form.getByLabel('Exam pack', { exact: true }).selectOption({ label: asmoPack.name });
+    await form.getByRole('checkbox', { name: asmoPack.name }).check();
     await form.getByLabel('Name', { exact: true }).fill(unique('Short'));
     await form.getByLabel('Total questions', { exact: true }).fill('10');
     await form.getByLabel('Time limit (minutes)', { exact: true }).fill('30');
@@ -144,10 +143,12 @@ test.describe('Mock exam blueprints', () => {
     await expect(save).toBeDisabled();
     await expect(form.getByText('The topic counts must add up to the total.')).toBeVisible();
 
-    // A topic can be chosen once: it is gone from the other line's choices.
-    await expect(
-      form.getByLabel('Topic 2', { exact: true }).locator('option', { hasText: time.nameEn }),
-    ).toHaveCount(0);
+    // A topic can be chosen once: it stays in the other line's choices, but disabled, with the row it is in.
+    const taken = form
+      .getByLabel('Topic 2', { exact: true })
+      .locator('option', { hasText: time.nameEn });
+    await expect(taken).toBeDisabled();
+    await expect(taken).toContainText('already in row 1');
 
     await form.getByLabel('Questions 2', { exact: true }).fill('6');
     await expect(save).toBeEnabled();
@@ -188,7 +189,7 @@ test.describe('Mock exam blueprints', () => {
     const time = await newTopic();
     const geometry = await newTopic();
     const blueprint = await creator.api.createBlueprint({
-      examPackId: asmoPack.id,
+      examPackIds: [asmoPack.id],
       name: unique('Alert mock'),
       totalQuestions: 4,
       timeLimitMinutes: 20,
@@ -198,8 +199,8 @@ test.describe('Mock exam blueprints', () => {
       ],
     });
 
-    await publish(creator, reviewer, asmoPack, time, 'EASY', 2);
-    await publish(creator, reviewer, asmoPack, geometry, 'EASY', 1);
+    await publish(creator, reviewer, time, 'EASY', 2);
+    await publish(creator, reviewer, geometry, 'EASY', 1);
 
     await signInStaff(page, creator.email, creator.password);
     await page.goto(adminSite('/mock-exams'));
@@ -226,7 +227,7 @@ test.describe('Mock exam blueprints', () => {
     await other.close();
 
     // Publishing the missing question makes the alert go away by itself.
-    await publish(creator, reviewer, asmoPack, geometry, 'EASY', 1);
+    await publish(creator, reviewer, geometry, 'EASY', 1);
     await page.reload();
     await expect(page.getByRole('region', { name: 'Question bank' })).toContainText(
       'Ready: the published questions can fill this blueprint.',
@@ -241,7 +242,7 @@ test.describe('Mock exam blueprints', () => {
     const time = await newTopic();
     const geometry = await newTopic();
     const blueprint = await creator.api.createBlueprint({
-      examPackId: asmoPack.id,
+      examPackIds: [asmoPack.id],
       name: unique('Sample mock'),
       totalQuestions: 6,
       timeLimitMinutes: 20,
@@ -258,7 +259,7 @@ test.describe('Mock exam blueprints', () => {
 
     for (const topic of [time, geometry]) {
       for (const difficulty of ['EASY', 'MEDIUM', 'HARD'] as const) {
-        await publish(creator, reviewer, asmoPack, topic, difficulty, 4);
+        await publish(creator, reviewer, topic, difficulty, 4);
       }
     }
 
@@ -328,13 +329,13 @@ test.describe('Mock exam blueprints', () => {
     const reviewer = await accounts.staff('REVIEWER');
     const time = await newTopic();
     const blueprint = await creator.api.createBlueprint({
-      examPackId: asmoPack.id,
+      examPackIds: [asmoPack.id],
       name: unique('Short mock'),
       totalQuestions: 3,
       timeLimitMinutes: 15,
       topicDistribution: [{ topicId: time.id, count: 3 }],
     });
-    await publish(creator, reviewer, asmoPack, time, 'EASY', 1);
+    await publish(creator, reviewer, time, 'EASY', 1);
 
     await signInStaff(page, creator.email, creator.password);
     await openBlueprint(page, blueprint.name);
@@ -346,7 +347,7 @@ test.describe('Mock exam blueprints', () => {
     await expect(panel.locator('ol > li')).toHaveCount(0);
 
     // Once the bank is filled, the same blueprint generates.
-    await publish(creator, reviewer, asmoPack, time, 'EASY', 2);
+    await publish(creator, reviewer, time, 'EASY', 2);
     await panel.getByRole('button', { name: 'Generate sample exam' }).click();
     await expect(panel.locator('ol > li')).toHaveCount(3);
     await expect(panel.getByRole('alert')).toHaveCount(0);
@@ -363,17 +364,17 @@ test.describe('Mock exam blueprints', () => {
     const tight = await newTopic();
     const roomy = await newTopic();
     const tightIds = [
-      ...(await publish(creator, reviewer, asmoPack, tight, 'EASY', 2)),
-      ...(await publish(creator, reviewer, asmoPack, tight, 'MEDIUM', 1)),
-      ...(await publish(creator, reviewer, asmoPack, tight, 'HARD', 1)),
+      ...(await publish(creator, reviewer, tight, 'EASY', 2)),
+      ...(await publish(creator, reviewer, tight, 'MEDIUM', 1)),
+      ...(await publish(creator, reviewer, tight, 'HARD', 1)),
     ];
     const roomyIds: string[] = [];
     for (const difficulty of ['EASY', 'MEDIUM', 'HARD'] as const) {
-      roomyIds.push(...(await publish(creator, reviewer, asmoPack, roomy, difficulty, 4)));
+      roomyIds.push(...(await publish(creator, reviewer, roomy, difficulty, 4)));
     }
 
     const shape = {
-      examPackId: asmoPack.id,
+      examPackIds: [asmoPack.id],
       totalQuestions: 10,
       timeLimitMinutes: 30,
       topicDistribution: [

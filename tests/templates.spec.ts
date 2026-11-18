@@ -64,7 +64,6 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
   test('E2E-PAR-01 · Define a template, preview 5 variants, save it', async ({
     page,
     accounts,
-    asmoPack,
     newTopic,
   }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
@@ -74,7 +73,7 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
 
     await signInStaff(page, creator.email, creator.password);
     await page.goto(adminSite('/questions/new'));
-    await new QuestionEditor(page).classify({ pack: asmoPack.name, topics: [topic.nameEn] });
+    await new QuestionEditor(page).classify({ topics: [topic.nameEn] });
     await fillApplesTemplate(page, prompt);
 
     // The image inputs are gone: a template's answers are formulas.
@@ -118,7 +117,6 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
   test('E2E-PAR-02 · An unsatisfiable template is refused with a clear error', async ({
     page,
     accounts,
-    asmoPack,
     newTopic,
   }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
@@ -126,7 +124,7 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
 
     await signInStaff(page, creator.email, creator.password);
     await page.goto(adminSite('/questions/new'));
-    await new QuestionEditor(page).classify({ pack: asmoPack.name, topics: [topic.nameEn] });
+    await new QuestionEditor(page).classify({ topics: [topic.nameEn] });
     // a is at least 5 and b at most 4: "a < b" never holds.
     await fillApplesTemplate(page, `{a} apples, {b} sold (${unique('never')})`, 'a < b');
 
@@ -150,13 +148,12 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
 
   test('E2E-PAR-03 · A question with image answer choices cannot be a template', async ({
     accounts,
-    asmoPack,
     newTopic,
   }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
     const topic = await newTopic();
     const image = await creator.api.uploadImage('assets/three-dots.png', 'image/png');
-    const input = textQuestion(asmoPack.id, [topic.id], `{a} and {b} (${unique('img')})`);
+    const input = textQuestion([topic.id], `{a} and {b} (${unique('img')})`);
     input.answerChoices[1] = {
       ...input.answerChoices[1]!,
       contentTextEn: null,
@@ -174,7 +171,6 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
   test('E2E-PAR-04 · A reviewer previews a template and publishes it', async ({
     page,
     accounts,
-    asmoPack,
     newTopic,
   }) => {
     const [creator, reviewer] = await Promise.all([
@@ -183,7 +179,7 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
     ]);
     const topic = await newTopic();
     const q = await creator.api.createQuestion({
-      ...textQuestion(asmoPack.id, [topic.id], `{a} apples, {b} sold (${unique('review')})`),
+      ...textQuestion([topic.id], `{a} apples, {b} sold (${unique('review')})`),
       isTemplate: true,
       template: applesTemplate(),
     });

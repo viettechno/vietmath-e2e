@@ -18,24 +18,25 @@ points to the manual steps it automates.
 
 ## What is automated
 
-Wave 1, the **smoke suite** (tag `@smoke`, 34 tests, under a minute with 4 workers). It
-covers every Release Phase 1, 2 and 3 acceptance criterion through the browser:
+Wave 1, the **smoke suite** (tag `@smoke`, 37 tests, under a minute with 4 workers). It
+covers every Release Phase 1, 2, 3 and 4.6 acceptance criterion through the browser:
 
-| Spec                          | Scenarios                                                       |
-| ----------------------------- | --------------------------------------------------------------- |
-| `tests/system.spec.ts`        | SYS-01, SYS-02                                                  |
-| `tests/i18n.spec.ts`          | I18N-01                                                         |
-| `tests/auth/register.spec.ts` | REG-01                                                          |
-| `tests/auth/login.spec.ts`    | LOGIN-01, LOGIN-02 (each staff role), LOGIN-02a, LOGIN-03       |
-| `tests/auth/sessions.spec.ts` | SESS-01, SESS-02                                                |
-| `tests/auth/password.spec.ts` | PWD-01                                                          |
-| `tests/browse.spec.ts`        | BRW-01                                                          |
-| `tests/users.spec.ts`         | USR-01, USR-05                                                  |
-| `tests/catalog.spec.ts`       | CAT-01, CAT-04                                                  |
-| `tests/questions.spec.ts`     | QB-01 (text-only × 4, image-only × 2, mixed × 6 choices), QB-06 |
-| `tests/review.spec.ts`        | RW-01, RW-03, RW-04, RW-07                                      |
-| `tests/access.spec.ts`        | ACL-01 (each role)                                              |
-| `tests/templates.spec.ts`     | PAR-01, PAR-02, PAR-03, PAR-04 (templates)                      |
+| Spec                          | Scenarios                                                                               |
+| ----------------------------- | --------------------------------------------------------------------------------------- |
+| `tests/system.spec.ts`        | SYS-01, SYS-02                                                                          |
+| `tests/i18n.spec.ts`          | I18N-01                                                                                 |
+| `tests/auth/register.spec.ts` | REG-01                                                                                  |
+| `tests/auth/login.spec.ts`    | LOGIN-01, LOGIN-02 (each staff role), LOGIN-02a, LOGIN-03                               |
+| `tests/auth/sessions.spec.ts` | SESS-01, SESS-02                                                                        |
+| `tests/auth/password.spec.ts` | PWD-01                                                                                  |
+| `tests/browse.spec.ts`        | BRW-01                                                                                  |
+| `tests/users.spec.ts`         | USR-01, USR-05                                                                          |
+| `tests/catalog.spec.ts`       | CAT-01, CAT-04                                                                          |
+| `tests/questions.spec.ts`     | QB-01 (text-only × 4, image-only × 2, mixed × 6 choices), QB-06                         |
+| `tests/review.spec.ts`        | RW-01, RW-03, RW-04, RW-07                                                              |
+| `tests/access.spec.ts`        | ACL-01 (each role)                                                                      |
+| `tests/templates.spec.ts`     | PAR-01, PAR-02, PAR-03, PAR-04 (templates)                                              |
+| `tests/sharedBank.spec.ts`    | CAT-05, CAT-06, BLP-10 (the topic tree, topic management, a blueprint in several packs) |
 
 Wave 2, the **regression** specs (no tag; the weekly run does them): the parts that only the
 browser can show.
@@ -47,6 +48,7 @@ browser can show.
 | `tests/admin-language.spec.ts` | I18N-04 (every admin web page, in Vietnamese and in English)                              |
 | `tests/authoring.spec.ts`      | QB-03, QB-09 (math), QB-10 (drag and paste), PAR-08, RW-02                                |
 | `tests/blueprints.spec.ts`     | BLP-01, BLP-02, BLP-04, BLP-05, BLP-06 (mock exam blueprints, the alert, the sample exam) |
+| `tests/sharedBank.spec.ts`     | BLP-09 (blueprints and subtopics: the disabled related topics, the content gaps)          |
 
 **What the API tests cover instead.** The workflows behind the screens (registration and its
 rules, sessions, passwords, Google on the phone, staff accounts and roles, the catalog,

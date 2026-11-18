@@ -37,7 +37,6 @@ export interface Competition {
 
 export interface Topic {
   id: string;
-  competitionId: string | null;
   parentId: string | null;
   depth: number;
   nameEn: string;
@@ -89,7 +88,6 @@ export interface TemplateVariant {
 }
 
 export interface QuestionInput {
-  examPackIds: string[];
   topicIds: string[];
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   languageMode: 'EN' | 'EN_VI';
@@ -111,7 +109,7 @@ export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 /** A mock exam blueprint (API Specifications §8). */
 export interface Blueprint {
   id: string;
-  examPackId: string;
+  examPackIds: string[];
   name: string;
   status: 'DRAFT' | 'ACTIVE' | 'RETIRED';
   totalQuestions: number;
@@ -122,7 +120,7 @@ export interface Blueprint {
 }
 
 export interface BlueprintInput {
-  examPackId: string;
+  examPackIds: string[];
   name: string;
   totalQuestions: number;
   timeLimitMinutes: number;
@@ -257,15 +255,17 @@ export class Api {
   updateExamPack = (id: string, input: { status?: PackStatus; price?: number }) =>
     this.call<ExamPack>(`/exam-packs/${id}`, patch(input));
 
-  createTopic = (input: {
-    competitionId?: string | null;
-    parentId?: string | null;
-    nameEn: string;
-    nameVi: string | null;
-  }) => this.call<Topic>('/topics', post(input));
+  createTopic = (input: { parentId?: string | null; nameEn: string; nameVi: string | null }) =>
+    this.call<Topic>('/topics', post(input));
 
-  topics = (competitionId?: string) =>
-    this.call<Topic[]>(competitionId ? `/topics?competitionId=${competitionId}` : '/topics');
+  updateTopic = (
+    id: string,
+    input: { nameEn?: string; nameVi?: string | null; parentId?: string | null },
+  ) => this.call<Topic>(`/topics/${id}`, patch(input));
+
+  deleteTopic = (id: string) => this.call<void>(`/topics/${id}`, { method: 'DELETE' });
+
+  topics = () => this.call<Topic[]>('/topics');
 
   // Question bank
 
