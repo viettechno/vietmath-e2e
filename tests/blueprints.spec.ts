@@ -6,8 +6,8 @@ import { expect, test } from '../support/fixtures';
 import { adminSite, expectNotice, signInStaff } from '../support/pages/auth';
 import { textQuestion } from '../support/pages/questions';
 
-// Release Phase 4: mock exam blueprints and exam generation (E2E-BLP-01 to 06).
-// The API checks every rule (the blackbox suite, BLP-01 to 07); these tests
+// Release Phase 4: mock exam blueprints and exam generation (E2E-BLP-01 to 06 and 08).
+// The API checks every rule (the blackbox suite, BLP-01 to 08); these tests
 // check what only the browser shows: the form with its live totals, the alert
 // and the sample exam.
 
@@ -17,7 +17,7 @@ const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   HARD: 'Hard',
 };
 
-/** Publishes n questions of a difficulty in a topic (a creator writes, a reviewer approves). */
+/** Publishes n questions of a difficulty in a topic (a creator writes, a reviewer approves); returns their ids. */
 async function publish(
   creator: Account,
   reviewer: Account,
@@ -25,14 +25,17 @@ async function publish(
   topic: Topic,
   difficulty: Difficulty,
   n: number,
-) {
+): Promise<string[]> {
+  const ids: string[] = [];
   for (let i = 0; i < n; i++) {
     const q = await creator.api.createQuestion(
       textQuestion(pack.id, [topic.id], unique(`${topic.nameEn} ${difficulty}`), { difficulty }),
     );
     await creator.api.act(q.id, 'submit-review');
     await reviewer.api.act(q.id, 'approve');
+    ids.push(q.id);
   }
+  return ids;
 }
 
 async function openBlueprint(page: Page, name: string) {
@@ -347,5 +350,97 @@ test.describe('Mock exam blueprints', () => {
     await panel.getByRole('button', { name: 'Generate sample exam' }).click();
     await expect(panel.locator('ol > li')).toHaveCount(3);
     await expect(panel.getByRole('alert')).toHaveCount(0);
+  });
+  test('E2E-BLP-08 · Archiving a question that an active blueprint needs', async ({
+    page,
+    accounts,
+    asmoPack,
+    newTopic,
+  }) => {
+    const creator = await accounts.staff('CONTENT_CREATOR');
+    const reviewer = await accounts.staff('REVIEWER');
+    // Tight has exactly the 4 questions the blueprint asks for; Roomy has 12 for its 6.
+    const tight = await newTopic();
+    const roomy = await newTopic();
+    const tightIds = [
+      ...(await publish(creator, reviewer, asmoPack, tight, 'EASY', 2)),
+      ...(await publish(creator, reviewer, asmoPack, tight, 'MEDIUM', 1)),
+      ...(await publish(creator, reviewer, asmoPack, tight, 'HARD', 1)),
+    ];
+    const roomyIds: string[] = [];
+    for (const difficulty of ['EASY', 'MEDIUM', 'HARD'] as const) {
+      roomyIds.push(...(await publish(creator, reviewer, asmoPack, roomy, difficulty, 4)));
+    }
+
+    const shape = {
+      examPackId: asmoPack.id,
+      totalQuestions: 10,
+      timeLimitMinutes: 30,
+      topicDistribution: [
+        { topicId: tight.id, count: 4 },
+        { topicId: roomy.id, count: 6 },
+      ],
+      difficultyDistribution: [
+        { difficulty: 'EASY' as const, count: 5, points: 1 },
+        { difficulty: 'MEDIUM' as const, count: 3, points: 2 },
+        { difficulty: 'HARD' as const, count: 2, points: 3 },
+      ],
+    };
+    const active = await creator.api.createBlueprint({
+      ...shape,
+      name: unique('Tight mock'),
+      status: 'ACTIVE',
+    });
+    const draft = await creator.api.createBlueprint({ ...shape, name: unique('Draft mock') });
+
+    await signInStaff(page, reviewer.email, reviewer.password);
+    const row = page.getByRole('row').filter({ hasText: active.name });
+    const questionBank = page.getByLabel('Question bank', { exact: true });
+
+    // The list can be filtered by the state of the question bank.
+    await page.goto(adminSite('/mock-exams'));
+    await questionBank.selectOption({ label: 'Ready' });
+    await expect(row).toBeVisible();
+    await questionBank.selectOption({ label: 'Not enough questions' });
+    await expect(page.getByRole('row').filter({ hasText: 'Ready' })).toHaveCount(0);
+    await expect(row).toHaveCount(0);
+
+    // The blueprint cannot do without any question of Tight: the archive asks first, and names it.
+    await page.goto(adminSite(`/questions/${tightIds[0]}`));
+    await page.getByRole('button', { name: 'Archive', exact: true }).click();
+    const warning = page.getByRole('alert').filter({ hasText: 'would leave these active' });
+    await expect(warning.getByRole('link', { name: active.name })).toBeVisible();
+    await expect(warning).toContainText(`Topic ${tight.nameEn}: needs 4, has 3`);
+    await expect(warning).not.toContainText(draft.name);
+    await expect(page.getByText('Archived.')).toHaveCount(0);
+
+    // Keeping it published closes the warning and archives nothing.
+    await warning.getByRole('button', { name: 'Keep it published' }).click();
+    await expect(warning).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Archive', exact: true })).toBeVisible();
+
+    // A Roomy question is spare: it is archived at once.
+    await page.goto(adminSite(`/questions/${roomyIds[0]}`));
+    await page.getByRole('button', { name: 'Archive', exact: true }).click();
+    await expectNotice(page, 'Archived.');
+    await expect(page.getByRole('alert')).toHaveCount(0);
+
+    // Confirmed, the question is archived.
+    await page.goto(adminSite(`/questions/${tightIds[0]}`));
+    await page.getByRole('button', { name: 'Archive', exact: true }).click();
+    await page.getByRole('button', { name: 'Archive anyway' }).click();
+    await expectNotice(page, 'Archived.');
+
+    // The blueprint stays Active and is now among those short of questions.
+    await page.goto(adminSite('/mock-exams'));
+    await questionBank.selectOption({ label: 'Not enough questions' });
+    await expect(row).toContainText('Active');
+    await expect(row).toContainText('Not enough questions');
+
+    // It was short already: the next Tight question is archived without asking.
+    await page.goto(adminSite(`/questions/${tightIds[1]}`));
+    await page.getByRole('button', { name: 'Archive', exact: true }).click();
+    await expectNotice(page, 'Archived.');
+    await expect(page.getByRole('alert')).toHaveCount(0);
   });
 });
