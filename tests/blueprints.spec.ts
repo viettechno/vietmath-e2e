@@ -94,11 +94,21 @@ test.describe('Mock exam blueprints', () => {
     await openBlueprint(page, name);
     const edit = page.getByRole('form', { name: 'Edit blueprint' });
     await expect(edit.getByLabel('Total questions', { exact: true })).toHaveValue('10');
-    // The topics come back in the order they are stored (by id).
-    const [first, second] = [time.id, geometry.id].sort();
-    await expect(edit.getByLabel('Topic 1', { exact: true })).toHaveValue(first!);
-    await expect(edit.getByLabel('Topic 2', { exact: true })).toHaveValue(second!);
+    // The topics come back in the order they were entered.
+    await expect(edit.getByLabel('Topic 1', { exact: true })).toHaveValue(time.id);
+    await expect(edit.getByLabel('Topic 2', { exact: true })).toHaveValue(geometry.id);
     await expect(edit.getByLabel('Medium: Points per question', { exact: true })).toHaveValue('2');
+
+    // Moving a topic changes the order, and it is kept.
+    await expect(edit.getByRole('button', { name: 'Move topic 1 up' })).toBeDisabled();
+    await expect(edit.getByRole('button', { name: 'Move topic 2 down' })).toBeDisabled();
+    await edit.getByRole('button', { name: 'Move topic 1 down' }).click();
+    await edit.getByRole('button', { name: 'Save' }).click();
+    await expectNotice(page, 'Blueprint saved.');
+    await page.reload();
+    const moved = page.getByRole('form', { name: 'Edit blueprint' });
+    await expect(moved.getByLabel('Topic 1', { exact: true })).toHaveValue(geometry.id);
+    await expect(moved.getByLabel('Topic 2', { exact: true })).toHaveValue(time.id);
   });
 
   test('E2E-BLP-02 · The distributions must add up', async ({
@@ -278,9 +288,25 @@ test.describe('Mock exam blueprints', () => {
       expect(new Set(prompts).size).toBe(6);
       await expect(questions.first()).toContainText('✓ Answer');
       seen.add(prompts.join('|'));
+
+      // The exam follows the blueprint's topics: Time first, then Geometry.
+      for (const [i, topic] of [time, time, geometry, geometry, geometry, geometry].entries()) {
+        await expect(questions.nth(i)).toContainText(topic.nameEn);
+      }
     }
 
     expect(seen.size, 'two generations differ').toBeGreaterThan(1);
+
+    // Move Geometry first, save, and the next exam lists it first.
+    const edit = page.getByRole('form', { name: 'Edit blueprint' });
+    await edit.getByRole('button', { name: 'Move topic 2 up' }).click();
+    await edit.getByRole('button', { name: 'Save' }).click();
+    await expectNotice(page, 'Blueprint saved.');
+    await generate.click();
+    await expect(questions).toHaveCount(6);
+    for (const [i, topic] of [geometry, geometry, geometry, geometry, time, time].entries()) {
+      await expect(questions.nth(i)).toContainText(topic.nameEn);
+    }
 
     // Nothing is stored: a reload shows no sample.
     await page.reload();
