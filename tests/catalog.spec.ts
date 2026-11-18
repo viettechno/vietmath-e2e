@@ -56,34 +56,27 @@ test.describe('Exam packs and topics', { tag: '@smoke' }, () => {
 
   test('E2E-CAT-04 · Topics', async ({ page, newBrowser, accounts }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
-    const shared = unique('Time');
-    const asmoOnly = unique('Geometry');
+    const first = unique('Time');
+    const second = unique('Geometry');
 
     await signInStaff(page, creator.email, creator.password);
     await page.goto(adminSite('/topics'));
     const form = page.getByRole('form', { name: 'Add a topic' });
+    // A topic has no competition: it is shared by everything that uses it.
+    await expect(form.getByLabel('Competition')).toHaveCount(0);
 
-    const addTopic = async (nameEn: string, competition: string) => {
+    const addTopic = async (nameEn: string) => {
       await form.getByLabel('Name (English)').fill(nameEn);
       await form.getByLabel('Name (Vietnamese)').fill(`${nameEn} (vi)`);
-      await form.getByLabel('Competition').selectOption({ label: competition });
       await form.getByRole('button', { name: 'Add topic' }).click();
       await expectNotice(page, 'Topic added.');
     };
-    await addTopic(shared, 'Shared (all competitions)');
-    await addTopic(asmoOnly, 'ASMO');
+    await addTopic(first);
+    await addTopic(second);
 
     const table = page.getByRole('table');
-    await expect(table.getByRole('row').filter({ hasText: shared })).toContainText('Shared');
-    await expect(table.getByRole('row').filter({ hasText: asmoOnly })).toContainText('ASMO');
-
-    const filter = page.getByLabel('Filter by competition');
-    await filter.selectOption({ label: 'ASMO' });
-    await expect(table).toContainText(asmoOnly);
-    await expect(table).not.toContainText(shared);
-    await filter.selectOption({ label: 'Shared (all competitions)' });
-    await expect(table).toContainText(shared);
-    await expect(table).not.toContainText(asmoOnly);
+    await expect(table.getByRole('row').filter({ hasText: first })).toContainText(`${first} (vi)`);
+    await expect(table.getByRole('row').filter({ hasText: second })).toBeVisible();
 
     // Reviewers do not manage topics.
     const reviewer = await accounts.staff('REVIEWER');

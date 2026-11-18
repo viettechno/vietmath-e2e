@@ -24,7 +24,6 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
     test(`E2E-QB-01 · Create a ${content} question with ${choices} choices`, async ({
       page,
       accounts,
-      asmoPack,
       newTopic,
     }) => {
       const creator = await accounts.staff('CONTENT_CREATOR');
@@ -37,7 +36,7 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
       await page.getByRole('link', { name: 'New question' }).click();
       await expect(page.getByRole('heading', { name: 'New question' })).toBeVisible();
 
-      await editor.classify({ pack: asmoPack.name, topics: [topic.nameEn] });
+      await editor.classify({ topics: [topic.nameEn] });
       if (content !== 'image-only') await page.getByLabel('Question (English)').fill(prompt);
       if (content !== 'text-only') {
         await editor.upload('Illustration', content === 'mixed' ? IMG.photo : IMG.clock);
@@ -84,12 +83,12 @@ test.describe('Question bank', { tag: '@smoke' }, () => {
     });
   }
 
-  test('E2E-QB-06 · Search and filter the bank', async ({ page, accounts, asmoPack, newTopic }) => {
+  test('E2E-QB-06 · Search and filter the bank', async ({ page, accounts, newTopic }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
     const topic = await newTopic();
     const word = unique('fruit').replace(/-/g, '');
-    const create = (text: string, o: Parameters<typeof textQuestion>[3]) =>
-      creator.api.createQuestion(textQuestion(asmoPack.id, [topic.id], `${word} ${text}`, o));
+    const create = (text: string, o: Parameters<typeof textQuestion>[2]) =>
+      creator.api.createQuestion(textQuestion([topic.id], `${word} ${text}`, o));
     await create('apples', { difficulty: 'EASY' });
     await create('pears', { difficulty: 'MEDIUM' });
     await create('plums', { difficulty: 'HARD', languageMode: 'EN_VI' });

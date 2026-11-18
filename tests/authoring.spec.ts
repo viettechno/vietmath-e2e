@@ -40,7 +40,6 @@ test.describe('Authoring a question', () => {
   test('E2E-QB-03 · Bilingual questions are shown side by side', async ({
     page,
     accounts,
-    asmoPack,
     newTopic,
   }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
@@ -54,11 +53,7 @@ test.describe('Authoring a question', () => {
     await expect(
       page.getByText('Vietnamese text is required before the question can be published.'),
     ).toBeVisible();
-    await editor.classify({
-      pack: asmoPack.name,
-      topics: [topic.nameEn],
-      language: 'English + Vietnamese',
-    });
+    await editor.classify({ topics: [topic.nameEn], language: 'English + Vietnamese' });
     await page.getByLabel('Question (English)').fill('What time is it?');
     await page.getByLabel('Question (Vietnamese)').fill('Mấy giờ rồi?');
     await editor.choiceCount(2);
@@ -86,18 +81,13 @@ test.describe('Authoring a question', () => {
     await expect(page.getByLabel('Question (Vietnamese)')).toHaveValue('');
   });
 
-  test('E2E-QB-09 · Math in question and answer text', async ({
-    page,
-    accounts,
-    asmoPack,
-    newTopic,
-  }) => {
+  test('E2E-QB-09 · Math in question and answer text', async ({ page, accounts, newTopic }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
     const topic = await newTopic();
     const editor = new QuestionEditor(page);
     await signInStaff(page, creator.email, creator.password);
     await page.goto(adminSite('/questions/new'));
-    await editor.classify({ pack: asmoPack.name, topics: [topic.nameEn] });
+    await editor.classify({ topics: [topic.nameEn] });
 
     const prompt = page.getByLabel('Question (English)');
     await expect(toolbar(page)).toHaveCount(0); // the buttons show while a field has focus
@@ -132,18 +122,13 @@ test.describe('Authoring a question', () => {
     await expect(page).toHaveURL(/\/questions\/[0-9a-f-]{36}$/);
   });
 
-  test('E2E-QB-10 · Add an image by dragging or pasting', async ({
-    page,
-    accounts,
-    asmoPack,
-    newTopic,
-  }) => {
+  test('E2E-QB-10 · Add an image by dragging or pasting', async ({ page, accounts, newTopic }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
     const topic = await newTopic();
     const editor = new QuestionEditor(page);
     await signInStaff(page, creator.email, creator.password);
     await page.goto(adminSite('/questions/new'));
-    await editor.classify({ pack: asmoPack.name, topics: [topic.nameEn] });
+    await editor.classify({ topics: [topic.nameEn] });
 
     // A picture dropped on the illustration's box.
     await dropImage(page.getByTestId('image-dropzone').first(), 'assets/clock.png');
@@ -185,7 +170,6 @@ test.describe('Authoring a question', () => {
   test('E2E-PAR-08 · Insert buttons and math in a template', async ({
     page,
     accounts,
-    asmoPack,
     newTopic,
   }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
@@ -193,7 +177,7 @@ test.describe('Authoring a question', () => {
     const editor = new QuestionEditor(page);
     await signInStaff(page, creator.email, creator.password);
     await page.goto(adminSite('/questions/new'));
-    await editor.classify({ pack: asmoPack.name, topics: [topic.nameEn], language: 'English' });
+    await editor.classify({ topics: [topic.nameEn], language: 'English' });
     await page.getByLabel(/Template: generate variants/).check();
 
     const prompt = page.getByLabel('Question (English)');
@@ -227,16 +211,11 @@ test.describe('Authoring a question', () => {
     await expect(formula).toHaveValue('abs()');
   });
 
-  test('E2E-RW-02 · Unsaved edits go with the submission', async ({
-    page,
-    accounts,
-    asmoPack,
-    newTopic,
-  }) => {
+  test('E2E-RW-02 · Unsaved edits go with the submission', async ({ page, accounts, newTopic }) => {
     const creator = await accounts.staff('CONTENT_CREATOR');
     const topic = await newTopic();
     const q = await creator.api.createQuestion(
-      textQuestion(asmoPack.id, [topic.id], unique('How many sides does a square have')),
+      textQuestion([topic.id], unique('How many sides does a square have')),
     );
 
     await signInStaff(page, creator.email, creator.password);
