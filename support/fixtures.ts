@@ -21,6 +21,8 @@ interface WorkerFixtures {
   admin: Api;
   /** The "ASMO Grade 1" exam pack (on sale), shared by the question tests. */
   asmoPack: ExamPack;
+  /** The "TIMO Grade 1" exam pack (on sale), for the questions used in several packs. */
+  timoPack: ExamPack;
 }
 
 interface TestFixtures {
@@ -42,6 +44,25 @@ interface TestFixtures {
 }
 
 const LANG_KEY = 'vietmath.lang';
+
+/** The Grade 1 exam pack of a competition, on sale: found, or made once for all workers. */
+async function gradeOnePack(admin: Api, code: string): Promise<ExamPack> {
+  return withLock(`${code.toLowerCase()}-pack`, async () => {
+    const found = (await admin.examPacks()).find(
+      (p) => p.grade.id === 1 && p.competition.code === code,
+    );
+    if (found) return found;
+    const competition = (await publicApi.competitions(1)).find((c) => c.code === code);
+    if (!competition) throw new Error(`${code} is not a Grade 1 competition`);
+    return admin.createExamPack({
+      gradeId: 1,
+      competitionId: competition.id,
+      price: 499000,
+      validityMonths: 12,
+      status: 'ACTIVE',
+    });
+  });
+}
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
   uiLanguage: ['en', { option: true }],
@@ -68,22 +89,14 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
   asmoPack: [
     async ({ admin }, use) => {
-      const pack = await withLock('asmo-pack', async () => {
-        const found = (await admin.examPacks()).find(
-          (p) => p.grade.id === 1 && p.competition.code === 'ASMO',
-        );
-        if (found) return found;
-        const asmo = (await publicApi.competitions(1)).find((c) => c.code === 'ASMO');
-        if (!asmo) throw new Error('ASMO is not a Grade 1 competition');
-        return admin.createExamPack({
-          gradeId: 1,
-          competitionId: asmo.id,
-          price: 499000,
-          validityMonths: 12,
-          status: 'ACTIVE',
-        });
-      });
-      await use(pack);
+      await use(await gradeOnePack(admin, 'ASMO'));
+    },
+    { scope: 'worker' },
+  ],
+
+  timoPack: [
+    async ({ admin }, use) => {
+      await use(await gradeOnePack(admin, 'TIMO'));
     },
     { scope: 'worker' },
   ],

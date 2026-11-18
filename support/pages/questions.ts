@@ -6,13 +6,14 @@ export class QuestionEditor {
   constructor(readonly page: Page) {}
 
   async classify(o: {
-    pack: string;
+    /** The exam packs to tick. */
+    pack: string | string[];
     topics: string[];
     difficulty?: 'Easy' | 'Medium' | 'Hard';
     language?: 'English' | 'English + Vietnamese';
   }) {
     const { page } = this;
-    await page.getByLabel('Exam pack').selectOption({ label: o.pack });
+    for (const pack of [o.pack].flat()) await page.getByRole('checkbox', { name: pack }).check();
     for (const topic of o.topics) await page.getByRole('checkbox', { name: topic }).check();
     await page.getByLabel('Difficulty').selectOption({ label: o.difficulty ?? 'Easy' });
     // "Language" alone also matches the interface language switcher.
@@ -61,7 +62,7 @@ export function textQuestion(
     isCorrect: i === 0,
   }));
   return {
-    examPackId,
+    examPackIds: [examPackId],
     topicIds,
     difficulty: 'EASY',
     languageMode: 'EN',
