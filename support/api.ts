@@ -349,6 +349,9 @@ export class Api {
 
   order = (id: string) => this.call<Order>(`/orders/${id}`);
 
+  /** My orders (a student), newest first. */
+  orders = () => this.call<Order[]>('/orders/me');
+
   /** A student sends proof of a transfer (with a screenshot when imagePath is given). */
   sendProof = async (orderId: string, input: ProofInput = { bankReference: 'FT2627900000' }) =>
     this.call<Order>(`/orders/${orderId}/proofs`, post(input));
@@ -372,8 +375,16 @@ export class Api {
       post(amountReceived === undefined ? {} : { amountReceived }),
     );
 
+  rejectOrder = (id: string, reason: string) =>
+    this.call<unknown>(`/orders/${id}/reject`, post({ reason }));
+
   recordRefund = (id: string, input: { amount: number; bankReference?: string }) =>
     this.call<unknown>(`/orders/${id}/refund`, post(input));
+
+  attemptResult = (id: string) =>
+    this.call<{ score: number; totalPoints: number }>(`/attempts/${id}/result`);
+
+  attempts = () => this.call<{ items: { attemptId: string; examPackId: string }[] }>('/attempts');
 
   entitlements = (query = '') => this.call<Entitlement[]>(`/entitlements${query}`);
 
