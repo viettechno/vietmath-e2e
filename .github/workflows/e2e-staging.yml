@@ -35,7 +35,8 @@ concurrency:
 jobs:
   e2e-staging:
     name: Browser tests (staging)
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: it moved to 26.04, which Playwright 1.56 cannot install a browser on.
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       E2E_BASE_URL: ${{ secrets.E2E_STAGING_BASE_URL }}

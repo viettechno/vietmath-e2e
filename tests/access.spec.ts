@@ -17,6 +17,9 @@ const PAGES = [
   '/exam-packs',
   '/mock-exams',
   '/mock-exams/new',
+  '/orders',
+  '/entitlements',
+  '/payment-settings',
   '/account',
 ] as const;
 
@@ -49,6 +52,9 @@ const SIDEBAR: Partial<Record<Who, string[]>> = {
     'Topics',
     'Exam packs',
     'Mock exams',
+    'Orders',
+    'Entitlements',
+    'Payment details',
   ],
 };
 

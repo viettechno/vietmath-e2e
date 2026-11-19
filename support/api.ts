@@ -139,6 +139,46 @@ export interface Readiness {
   }[];
 }
 
+export type OrderStatus =
+  'AWAITING_PAYMENT' | 'PENDING_VERIFICATION' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED';
+
+/** An order of a student (API Specifications §9). */
+export interface Order {
+  id: string;
+  code: string;
+  status: OrderStatus;
+  examPackId: string;
+  amount: number;
+  amountReceived: number | null;
+  paymentDetails: { bankName: string; accountNumber: string; accountName: string };
+  proofs: { id: string; hasImage: boolean }[];
+  entitlementId: string | null;
+  refund: { amount: number; bankReference: string | null } | null;
+}
+
+export interface ProofInput {
+  imageKey?: string;
+  transferredAt?: string;
+  senderName?: string;
+  bankReference?: string;
+  note?: string;
+}
+
+export interface Entitlement {
+  id: string;
+  userId: string;
+  examPackId: string;
+  expiresAt: string;
+  status: 'ACTIVE' | 'EXPIRED';
+}
+
+export interface PaymentDetails {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  qrImageUrl: string | null;
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -296,6 +336,50 @@ export class Api {
     this.call<Blueprint>('/mock-exam-templates', post(input));
 
   readiness = (id: string) => this.call<Readiness>(`/mock-exam-templates/${id}/readiness`);
+
+  // Payment details, orders and entitlements (Phase 5)
+
+  savePaymentDetails = (input: PaymentDetails) =>
+    this.call<PaymentDetails>('/payment-settings', { method: 'PUT', body: JSON.stringify(input) });
+
+  paymentDetails = () => this.call<PaymentDetails>('/payment-settings');
+
+  /** A student buys an exam pack: the open order for it, or a new one. */
+  buy = (examPackId: string) => this.call<Order>('/orders', post({ examPackId }));
+
+  order = (id: string) => this.call<Order>(`/orders/${id}`);
+
+  /** A student sends proof of a transfer (with a screenshot when imagePath is given). */
+  sendProof = async (orderId: string, input: ProofInput = { bankReference: 'FT2627900000' }) =>
+    this.call<Order>(`/orders/${orderId}/proofs`, post(input));
+
+  /** Uploads a screenshot of a transfer for an order and returns the key to send with the proof. */
+  uploadProofImage = async (orderId: string, path: string, type = 'image/png') => {
+    const form = new FormData();
+    form.append('file', new Blob([await readFile(path)], { type }), basename(path));
+    return this.call<{ imageKey: string }>(`/orders/${orderId}/proofs/image`, {
+      method: 'POST',
+      body: form,
+    });
+  };
+
+  cancelOrder = (id: string, reason: string) =>
+    this.call<Order>(`/orders/${id}/cancel`, post({ reason }));
+
+  confirmOrder = (id: string, amountReceived?: number) =>
+    this.call<unknown>(
+      `/orders/${id}/confirm`,
+      post(amountReceived === undefined ? {} : { amountReceived }),
+    );
+
+  recordRefund = (id: string, input: { amount: number; bankReference?: string }) =>
+    this.call<unknown>(`/orders/${id}/refund`, post(input));
+
+  entitlements = (query = '') => this.call<Entitlement[]>(`/entitlements${query}`);
+
+  myEntitlements = () => this.call<Entitlement[]>('/entitlements/me');
+
+  blueprints = () => this.call<Blueprint[]>('/mock-exam-templates');
 
   uploadImage = async (path: string, type: string) => {
     const form = new FormData();

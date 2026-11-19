@@ -39,7 +39,8 @@ concurrency:
 jobs:
   checks:
     name: Typecheck and format
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: it moved to 26.04, which Playwright 1.56 cannot install a browser on.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -52,7 +53,8 @@ jobs:
 
   e2e:
     name: Browser tests
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: it moved to 26.04, which Playwright 1.56 cannot install a browser on.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       BACKEND_TAG: ${{ inputs.backend_tag || vars.E2E_BACKEND_TAG || 'latest' }}
