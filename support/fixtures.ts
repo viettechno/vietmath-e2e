@@ -4,6 +4,7 @@ import { PASSWORD, unique, uniqueEmail, uniquePhone } from './data';
 import { env } from './env';
 import { withLock } from './lock';
 import { Inbox, mailAvailable } from './mailpit';
+import { ensurePaymentDetails, shopPack } from './shop';
 
 /** An account made for one test. */
 export interface Account {
@@ -23,6 +24,8 @@ interface WorkerFixtures {
   asmoPack: ExamPack;
   /** The "TIMO Grade 1" exam pack (on sale), for the questions used in several packs. */
   timoPack: ExamPack;
+  /** A pack on sale with an exam a student can buy; payment details are saved. */
+  buyablePack: ExamPack;
 }
 
 interface TestFixtures {
@@ -97,6 +100,14 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   timoPack: [
     async ({ admin }, use) => {
       await use(await gradeOnePack(admin, 'TIMO'));
+    },
+    { scope: 'worker' },
+  ],
+
+  buyablePack: [
+    async ({ admin }, use) => {
+      await ensurePaymentDetails(admin);
+      await use(await shopPack(admin));
     },
     { scope: 'worker' },
   ],

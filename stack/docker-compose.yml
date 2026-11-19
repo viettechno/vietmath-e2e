@@ -78,6 +78,8 @@ services:
       SMTP_FROM: no-reply@vietmath.test
       MEDIA_BACKEND: local
       MEDIA_LOCAL_DIR: /data/media
+      # Exams are generated from the bank as it is now (no cache), so a new question counts at once.
+      READINESS_CACHE_TTL: 0s
     volumes:
       - media:/data/media
     depends_on:

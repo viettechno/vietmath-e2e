@@ -48,6 +48,7 @@ browser can show.
 | `tests/admin-language.spec.ts` | I18N-04 (every admin web page, in Vietnamese and in English)                              |
 | `tests/authoring.spec.ts`      | QB-03, QB-09 (math), QB-10 (drag and paste), PAR-08, RW-02                                |
 | `tests/blueprints.spec.ts`     | BLP-01, BLP-02, BLP-04, BLP-05, BLP-06 (mock exam blueprints, the alert, the sample exam) |
+| `tests/orders.spec.ts`         | ORD-01, 03, 07, 08, 12, 13 (admin web: payments, refunds, entitlements)                   |
 | `tests/sharedBank.spec.ts`     | BLP-09 (blueprints and subtopics: the disabled related topics, the content gaps)          |
 
 **What the API tests cover instead.** The workflows behind the screens (registration and its
