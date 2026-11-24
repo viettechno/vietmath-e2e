@@ -362,7 +362,8 @@ export class Api {
   order = (id: string) => this.call<Order>(`/orders/${id}`);
 
   /** My orders (a student), newest first. */
-  orders = () => this.call<Order[]>('/orders/me');
+  /** The student's orders, newest first (the API pages them: this is the first page of the most it gives). */
+  orders = async () => (await this.call<{ items: Order[] }>('/orders/me?pageSize=100')).items;
 
   /** A student sends proof of a transfer (with a screenshot when imagePath is given). */
   sendProof = async (orderId: string, input: ProofInput = { bankReference: 'FT2627900000' }) =>
