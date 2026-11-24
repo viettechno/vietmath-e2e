@@ -33,25 +33,26 @@ test.describe('Exam packs and topics', { tag: '@smoke' }, () => {
     await form.getByLabel('Competition').selectOption({ label: competition.name });
     await form.getByLabel('Price (VND)').fill('499000');
     await form.getByLabel('Validity').selectOption({ label: '12 months' });
-    await form.getByLabel('Status').selectOption({ label: 'On sale' });
+    // A new pack is a draft: there is no status to choose.
+    await expect(form.getByLabel('Status')).toHaveCount(0);
     await form.getByRole('button', { name: 'Create pack' }).click();
 
-    await expectNotice(page, 'Exam pack created.');
+    await expectNotice(page, 'Exam pack created as a draft.');
     const row = page.getByRole('row').filter({ hasText: name });
-    await expect(row).toContainText('On sale');
-    await expect(row).toContainText('12 months');
-    expect((await publicApi.examPacks()).map((p) => p.name)).toContain(name);
-
-    // A draft pack is hidden from students and the public.
-    await page.getByRole('button', { name: `Edit ${name}` }).click();
-    const editRow = page
-      .getByRole('row')
-      .filter({ has: page.getByRole('button', { name: 'Save', exact: true }) });
-    await editRow.getByLabel('Status').selectOption({ label: 'Draft' });
-    await editRow.getByRole('button', { name: 'Save', exact: true }).click();
-    await expectNotice(page, 'Exam pack updated.');
     await expect(row).toContainText('Draft');
+    await expect(row).toContainText('12 months');
+    // A draft pack is hidden from students and the public.
     expect((await publicApi.examPacks()).map((p) => p.name)).not.toContain(name);
+
+    // It is put on sale after it is made. It has no exam yet, so the warning is confirmed (E2E-ORD-13).
+    await page.getByRole('button', { name: `Edit ${name}` }).click();
+    const editRow = page.getByRole('row').filter({ has: page.getByLabel('Status') });
+    await editRow.getByLabel('Status').selectOption({ label: 'On sale' });
+    await editRow.getByRole('button', { name: 'Save', exact: true }).click();
+    await editRow.getByRole('button', { name: 'Put on sale anyway' }).click();
+    await expectNotice(page, 'Exam pack updated.');
+    await expect(row).toContainText('On sale');
+    expect((await publicApi.examPacks()).map((p) => p.name)).toContain(name);
   });
 
   test('E2E-CAT-04 · Topics', async ({ page, newBrowser, accounts }) => {

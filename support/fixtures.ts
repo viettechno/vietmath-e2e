@@ -57,13 +57,13 @@ async function gradeOnePack(admin: Api, code: string): Promise<ExamPack> {
     if (found) return found;
     const competition = (await publicApi.competitions(1)).find((c) => c.code === code);
     if (!competition) throw new Error(`${code} is not a Grade 1 competition`);
-    return admin.createExamPack({
+    const draft = await admin.createExamPack({
       gradeId: 1,
       competitionId: competition.id,
       price: 499000,
       validityMonths: 12,
-      status: 'ACTIVE',
     });
+    return admin.putOnSale(draft.id);
   });
 }
 

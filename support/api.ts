@@ -283,17 +283,22 @@ export class Api {
 
   examPacks = () => this.call<ExamPack[]>('/exam-packs');
 
+  /** Creates an exam pack; it is always a draft (it has no exam yet). */
   createExamPack = (input: {
     gradeId: number;
     competitionId: string;
     price: number;
     validityMonths: number;
-    status: PackStatus;
     name?: string;
   }) => this.call<ExamPack>('/exam-packs', post(input));
 
-  updateExamPack = (id: string, input: { status?: PackStatus; price?: number }) =>
-    this.call<ExamPack>(`/exam-packs/${id}`, patch(input));
+  updateExamPack = (
+    id: string,
+    input: { status?: PackStatus; price?: number; confirm?: boolean },
+  ) => this.call<ExamPack>(`/exam-packs/${id}`, patch(input));
+
+  /** Puts a pack on sale even if it has no exam yet (the warning is confirmed). */
+  putOnSale = (id: string) => this.updateExamPack(id, { status: 'ACTIVE', confirm: true });
 
   createTopic = (input: { parentId?: string | null; nameEn: string; nameVi: string | null }) =>
     this.call<Topic>('/topics', post(input));

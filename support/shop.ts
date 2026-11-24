@@ -43,9 +43,14 @@ async function freePair(admin: Api): Promise<{ gradeId: number; competitionId: s
 
 /** A new exam pack with no exam (and no blueprint), 499,000 VND for 12 months. */
 export function newPack(admin: Api, status: PackStatus = 'DRAFT'): Promise<ExamPack> {
-  return withLock('pack-pair', async () =>
-    admin.createExamPack({ ...(await freePair(admin)), price: 499000, validityMonths: 12, status }),
-  );
+  return withLock('pack-pair', async () => {
+    const draft = await admin.createExamPack({
+      ...(await freePair(admin)),
+      price: 499000,
+      validityMonths: 12,
+    });
+    return status === 'DRAFT' ? draft : admin.updateExamPack(draft.id, { status, confirm: true });
+  });
 }
 
 /** A user of a staff role of its own, signed in. */
