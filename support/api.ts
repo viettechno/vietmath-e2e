@@ -340,6 +340,10 @@ export class Api {
   createBlueprint = (input: BlueprintInput) =>
     this.call<Blueprint>('/mock-exam-templates', post(input));
 
+  /** Puts a blueprint back to a draft (or active): the pack loses its exam (or has it again). */
+  setBlueprintStatus = (id: string, status: Blueprint['status']) =>
+    this.call<Blueprint>(`/mock-exam-templates/${id}`, patch({ status }));
+
   readiness = (id: string) => this.call<Readiness>(`/mock-exam-templates/${id}/readiness`);
 
   // Payment details, orders and entitlements (Phase 5)

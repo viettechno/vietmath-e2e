@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 import type { Account } from '../support/fixtures';
 import { test } from '../support/fixtures';
 import { apiURL } from '../support/env';
-import { newPack } from '../support/shop';
+import { newPack, ownShopPack } from '../support/shop';
 import { signIn } from '../support/pages/auth';
 
 // Release Phase 5, the student web: buy an exam pack, pay by transfer and send proof (E2E-ORD-01 to 06, 10
@@ -27,12 +27,12 @@ async function buy(page: Page, packId: string): Promise<string> {
 }
 
 test.describe('Orders (student web)', () => {
-  test('E2E-ORD-01 · A student buys a pack and sees how to pay; Buy again opens the same order', async ({
+  test('E2E-ORD-01 · A student buys a pack and sees how to pay; with the order open there is no Buy', async ({
     page,
     accounts,
     buyablePack,
   }) => {
-    await signedIn(page, accounts);
+    const student = await signedIn(page, accounts);
     const code = await buy(page, buyablePack.id);
 
     expect(code).toMatch(/^[2-9A-HJ-NP-Z]{8}$/);
@@ -44,9 +44,16 @@ test.describe('Orders (student web)', () => {
       page.getByText(`Write ${code} in the description of your transfer.`),
     ).toBeVisible();
 
-    // ORD-02: one open order per pack.
+    // ORD-02: one open order per pack. The pack page says so and has no Buy; the API gives the same order.
     await page.goto(`/packs/${buyablePack.id}`);
-    await page.getByRole('button', { name: 'Buy', exact: true }).click();
+    await expect(
+      page.getByText(
+        `You have already ordered this exam pack (order ${code}) and have not paid yet.`,
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Buy', exact: true })).toHaveCount(0);
+    expect((await student.api.buy(buyablePack.id)).code).toBe(code);
+    await page.getByRole('link', { name: 'Go to your order' }).click();
     await expect(page.getByRole('heading', { level: 1, name: `Order ${code}` })).toBeVisible();
     await page.goto('/orders');
     await expect(page.getByRole('link', { name: /^Open order / })).toHaveCount(1);
@@ -245,6 +252,34 @@ test.describe('Orders (student web)', () => {
       'CANCELLED',
       'CONFIRMED',
     ]);
+  });
+
+  test('E2E-ORD-13 · A pack that loses its exams: an open order says so and can still be paid', async ({
+    page,
+    accounts,
+    admin,
+  }) => {
+    const { pack, blueprintId } = await ownShopPack(admin);
+    const student = await signedIn(page, accounts);
+    const code = await buy(page, pack.id);
+
+    // The exam goes away: the pack is "Coming soon", and the open order says there is nothing to practise yet.
+    await admin.setBlueprintStatus(blueprintId, 'DRAFT');
+    await page.goto(`/packs/${pack.id}`);
+    await expect(page.getByText(/Coming soon: this exam pack has no exams yet/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Buy', exact: true })).toHaveCount(0);
+    await page.getByRole('link', { name: 'Go to your order' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: `Order ${code}` })).toBeVisible();
+    await expect(page.getByText(/has no exams to practise for now/)).toBeVisible();
+
+    // It can still be paid, and the access runs.
+    const form = page.getByRole('form', { name: 'Send proof' });
+    await form.getByLabel('Bank reference').fill('FT2627900011');
+    await form.getByRole('button', { name: 'Submit' }).click();
+    await expect(page.getByText('Waiting for verification')).toBeVisible();
+    const order = (await student.api.orders()).find((o) => o.code === code)!;
+    await admin.confirmOrder(order.id);
+    expect((await student.api.myEntitlements()).map((e) => e.examPackId)).toEqual([pack.id]);
   });
 
   test('E2E-ORD-13 · A pack without exams: Coming soon, no Buy', async ({

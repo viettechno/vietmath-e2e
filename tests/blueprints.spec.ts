@@ -58,7 +58,7 @@ test.describe('Mock exam blueprints', () => {
     await page.getByRole('link', { name: 'New blueprint' }).click();
 
     const form = page.getByRole('form', { name: 'New blueprint' });
-    await form.getByRole('checkbox', { name: asmoPack.name }).check();
+    await form.getByRole('checkbox', { name: asmoPack.name, exact: true }).check();
     await form.getByLabel('Name', { exact: true }).fill(name);
     await form.getByLabel('Total questions', { exact: true }).fill('10');
     await form.getByLabel('Time limit (minutes)', { exact: true }).fill('30');
@@ -128,7 +128,7 @@ test.describe('Mock exam blueprints', () => {
     const form = page.getByRole('form', { name: 'New blueprint' });
     const save = form.getByRole('button', { name: 'Save' });
 
-    await form.getByRole('checkbox', { name: asmoPack.name }).check();
+    await form.getByRole('checkbox', { name: asmoPack.name, exact: true }).check();
     await form.getByLabel('Name', { exact: true }).fill(unique('Short'));
     await form.getByLabel('Total questions', { exact: true }).fill('10');
     await form.getByLabel('Time limit (minutes)', { exact: true }).fill('30');
