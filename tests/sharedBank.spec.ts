@@ -200,7 +200,7 @@ test.describe('The shared bank, topics and blueprints in several packs', () => {
     const name = unique('Subtopics mock');
     await page.goto(adminSite('/mock-exams/new'));
     const form = page.getByRole('form', { name: 'New blueprint' });
-    await form.getByRole('checkbox', { name: pack.name }).check();
+    await form.getByRole('checkbox', { name: pack.name, exact: true }).check();
     await form.getByLabel('Name', { exact: true }).fill(name);
     await form.getByLabel('Total questions', { exact: true }).fill('6');
     await form.getByLabel('Time limit (minutes)', { exact: true }).fill('20');
@@ -307,9 +307,11 @@ test.describe('The shared bank, topics and blueprints in several packs', () => {
       // Offer it in TIMO too: it is listed under both packs, with both names.
       await page.goto(adminSite(`/mock-exams/${blueprint.id}`));
       const form = page.getByRole('form', { name: 'Edit blueprint' });
-      await expect(form.getByRole('checkbox', { name: asmoPack.name })).toBeChecked();
-      await expect(form.getByRole('checkbox', { name: timoPack.name })).not.toBeChecked();
-      await form.getByRole('checkbox', { name: timoPack.name }).check();
+      await expect(form.getByRole('checkbox', { name: asmoPack.name, exact: true })).toBeChecked();
+      await expect(
+        form.getByRole('checkbox', { name: timoPack.name, exact: true }),
+      ).not.toBeChecked();
+      await form.getByRole('checkbox', { name: timoPack.name, exact: true }).check();
       await form.getByRole('button', { name: 'Save' }).click();
       await expectNotice(page, 'Blueprint saved.');
 
@@ -323,11 +325,11 @@ test.describe('The shared bank, topics and blueprints in several packs', () => {
 
       // Without ASMO it is listed under TIMO only; a blueprint needs a pack.
       await page.goto(adminSite(`/mock-exams/${blueprint.id}`));
-      await form.getByRole('checkbox', { name: asmoPack.name }).uncheck();
-      await form.getByRole('checkbox', { name: timoPack.name }).uncheck();
+      await form.getByRole('checkbox', { name: asmoPack.name, exact: true }).uncheck();
+      await form.getByRole('checkbox', { name: timoPack.name, exact: true }).uncheck();
       await expect(form.getByRole('button', { name: 'Save' })).toBeDisabled();
       await expect(form.getByText('Tick at least one exam pack')).toBeVisible();
-      await form.getByRole('checkbox', { name: timoPack.name }).check();
+      await form.getByRole('checkbox', { name: timoPack.name, exact: true }).check();
       await form.getByRole('button', { name: 'Save' }).click();
       await expectNotice(page, 'Blueprint saved.');
     },
