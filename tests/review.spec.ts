@@ -71,7 +71,7 @@ test.describe('Review workflow', { tag: '@smoke' }, () => {
 
     await page.getByRole('button', { name: 'Approve and publish' }).click();
     await expect(page.getByRole('alert')).toHaveText(
-      'A bilingual question needs Vietnamese text for the question and every text answer before it can be published.',
+      'A bilingual question needs Vietnamese text for the question, every text answer and the explanation before it can be published.',
     );
     await expect(statusBadge(page)).toHaveText('Pending review');
     expect((await reviewer.api.getQuestion(q.id)).status).toBe('PENDING_REVIEW');

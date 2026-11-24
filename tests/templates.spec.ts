@@ -79,6 +79,9 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
     // The image inputs are gone: a template's answers are formulas.
     await expect(page.getByLabel('Image for answer A: Add image')).toHaveCount(0);
 
+    // The explanation of a template uses its variables: each variant shows it with its own numbers (E2E-QB-11).
+    await page.getByLabel('Explanation (English)').fill('{a} - {b} = {a - b}.');
+
     // Preview 5 variants, twice: distinct and valid every time.
     const panel = page.getByRole('region', { name: 'Variants' });
     for (let run = 0; run < 2; run++) {
@@ -92,6 +95,10 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
       await expect(panel).toContainText(
         `A store has ${first.values.a} apples and sells ${first.values.b} of them.`,
       );
+      await expect(panel.getByRole('heading', { name: 'Explanation' })).toHaveCount(5);
+      await expect(panel).toContainText(
+        `${first.values.a} - ${first.values.b} = ${first.values.a! - first.values.b!}.`,
+      );
     }
 
     await page.getByRole('button', { name: 'Save draft' }).click();
@@ -100,6 +107,7 @@ test.describe('Question templates', { tag: '@smoke' }, () => {
 
     const saved = await creator.api.getQuestion(page.url().split('/').pop()!);
     expect(saved.isTemplate).toBe(true);
+    expect(saved.explanationEn).toBe('{a} - {b} = {a - b}.');
     expect(saved.template).toMatchObject(applesTemplate() as unknown as Record<string, unknown>);
     expect(saved.answerChoices.map((c) => c.contentTextEn)).toEqual([
       '{a - b}',

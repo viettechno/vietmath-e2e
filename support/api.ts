@@ -94,6 +94,9 @@ export interface QuestionInput {
   promptTextEn: string | null;
   promptTextVi: string | null;
   promptImageUrl: string | null;
+  /** Why the answer is right (optional): students read it with their result. */
+  explanationEn?: string | null;
+  explanationVi?: string | null;
   isTemplate?: boolean;
   template?: QuestionTemplate | null;
   answerChoices: AnswerChoice[];

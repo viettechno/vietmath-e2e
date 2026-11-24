@@ -99,7 +99,10 @@ async function buildShopPack(
     ]);
     const topic = await admin.createTopic({ nameEn: unique('Shop topic'), nameVi: null });
     for (let i = 0; i < 6; i++) {
-      const q = await creator.createQuestion(textQuestion([topic.id], unique('Shop question')));
+      const prompt = unique('Shop question');
+      const q = await creator.createQuestion(
+        textQuestion([topic.id], prompt, { explanationEn: `Why: ${prompt} has the first answer.` }),
+      );
       await creator.act(q.id, 'submit-review');
       await reviewer.act(q.id, 'approve');
     }

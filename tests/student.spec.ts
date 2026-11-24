@@ -338,6 +338,9 @@ test.describe('Mock exams (student web)', () => {
     await expect(questions.nth(2).getByRole('radio', { name: /^B/ })).toBeChecked();
     await expect(page.getByRole('timer', { name: 'Time left' })).toBeVisible();
 
+    // The explanations are for the result, not for the exam.
+    await expect(page.getByText(/^Why:/)).toHaveCount(0);
+
     await page.getByRole('button', { name: 'Submit' }).click();
     await page.getByRole('button', { name: 'Yes, submit' }).click();
     await expect(page).toHaveURL(/\/result$/);
@@ -348,6 +351,9 @@ test.describe('Mock exams (student web)', () => {
     await expect(page.getByText('Not answered', { exact: true })).toHaveCount(1);
     await expect(page.getByText('Correct answer')).toHaveCount(4);
     await expect(page.getByRole('radio')).toHaveCount(0);
+    // Each question shows why its answer is right (the explanation was not there during the exam).
+    await expect(page.getByRole('heading', { name: 'Explanation' })).toHaveCount(4);
+    await expect(page.getByText(/^Why: Shop question/).first()).toBeVisible();
     const attempt = (await student.api.attempts()).items[0]!;
     const result = await student.api.attemptResult(attempt.attemptId);
     expect(result.score).toBeGreaterThan(0);
