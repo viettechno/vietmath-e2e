@@ -393,7 +393,24 @@ export class Api {
   attemptResult = (id: string) =>
     this.call<{ score: number; totalPoints: number }>(`/attempts/${id}/result`);
 
-  attempts = () => this.call<{ items: { attemptId: string; examPackId: string }[] }>('/attempts');
+  attempts = () =>
+    this.call<{
+      items: { attemptId: string; mode: 'MOCK' | 'PRACTICE'; examPackId: string }[];
+    }>('/attempts');
+
+  /** The topics of a pack that a student with the pack can practice. */
+  practiceTopics = (examPackId: string) =>
+    this.call<{
+      questionCounts: number[];
+      minutesPerQuestion: number;
+      items: { topicId: string; nameEn: string; depth: number; questions: number }[];
+    }>(`/exam-packs/${examPackId}/practice-topics`);
+
+  startPractice = (input: { examPackId: string; topicId: string; questionCount: number }) =>
+    this.call<{ attemptId: string; mode: string; timeLimitMinutes: number; totalPoints: number }>(
+      '/attempts/practice',
+      post(input),
+    );
 
   entitlements = (query = '') => this.call<Entitlement[]>(`/entitlements${query}`);
 
