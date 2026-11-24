@@ -429,7 +429,7 @@ test.describe('Mock exams (student web)', () => {
     // The topic of the pack's blueprint, with its 6 published questions: only 5 can be chosen.
     const topic = page.getByRole('radio', { name: /Shop topic/ });
     await expect(topic).toHaveCount(1);
-    await expect(page.getByText('6 questions', { exact: true })).toBeVisible();
+    await expect(page.getByText('Questions: 6', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Start practice' })).toBeDisabled();
     await topic.check();
     await expect(page.getByRole('radio', { name: /^5 questions · 25 minutes$/ })).toBeChecked();
