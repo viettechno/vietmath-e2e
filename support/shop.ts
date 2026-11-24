@@ -78,6 +78,20 @@ export function shopPack(admin: Api): Promise<ExamPack> {
       if (pack) return pack;
     }
 
+    return (await buildShopPack(admin, SHOP_BLUEPRINT)).pack;
+  });
+}
+
+/** A pack with an exam of its own (a blueprint that published questions fill), to take the exam away in a test. */
+export async function ownShopPack(admin: Api): Promise<{ pack: ExamPack; blueprintId: string }> {
+  return withLock('shop-pack-own', () => buildShopPack(admin, unique('Own shop exam')));
+}
+
+async function buildShopPack(
+  admin: Api,
+  blueprintName: string,
+): Promise<{ pack: ExamPack; blueprintId: string }> {
+  {
     const pack = await newPack(admin, 'ACTIVE');
     const [creator, reviewer] = await Promise.all([
       staff(admin, 'CONTENT_CREATOR'),
@@ -89,14 +103,14 @@ export function shopPack(admin: Api): Promise<ExamPack> {
       await creator.act(q.id, 'submit-review');
       await reviewer.act(q.id, 'approve');
     }
-    await creator.createBlueprint({
+    const blueprint = await creator.createBlueprint({
       examPackIds: [pack.id],
-      name: SHOP_BLUEPRINT,
+      name: blueprintName,
       totalQuestions: 4,
       timeLimitMinutes: 30,
       status: 'ACTIVE',
       topicDistribution: [{ topicId: topic.id, count: 4 }],
     });
-    return pack;
-  });
+    return { pack, blueprintId: blueprint.id };
+  }
 }
