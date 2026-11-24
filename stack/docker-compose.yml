@@ -80,6 +80,8 @@ services:
       MEDIA_LOCAL_DIR: /data/media
       # Exams are generated from the bank as it is now (no cache), so a new question counts at once.
       READINESS_CACHE_TTL: 0s
+      # Two free attempts for each pack (the default), written down because the specs count on it.
+      TRIAL_ATTEMPTS_PER_PACK: 2
     volumes:
       - media:/data/media
     depends_on:
