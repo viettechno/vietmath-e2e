@@ -6,7 +6,7 @@ import { newPack, ownShopPack } from '../support/shop';
 import { signIn } from '../support/pages/auth';
 
 // Release Phase 5, the student web: buy an exam pack, pay by transfer and send proof (E2E-ORD-01 to 06, 10
-// and 13), take a mock exam, see the result and the history (E2E-ATT-01, 03 and 08). The admin decides through
+// and 13), take a mock exam, see the result and the history (E2E-ATT-01, 03 and 08), practice by topic (E2E-ATT-09). The admin decides through
 // the API here; the admin screens are tested in orders.spec.ts. The API checks every rule (the blackbox suite).
 
 const SCREENSHOT = 'assets/clock.png';
@@ -407,5 +407,71 @@ test.describe('Mock exams (student web)', () => {
     await expect(page.getByRole('timer', { name: 'Time left' })).toBeVisible();
     await expect(page.getByText(/this is a free attempt/)).toHaveCount(0);
     await expect(page.getByRole('group', { name: /^Question \d/ })).toHaveCount(4);
+  });
+
+  test('E2E-ATT-09 · Practice by topic: choose a topic and a size, 5 minutes a question, in the history', async ({
+    page,
+    newBrowser,
+    accounts,
+    admin,
+    buyablePack,
+  }) => {
+    const student = await accounts.customer();
+    const order = await student.api.buy(buyablePack.id);
+    await student.api.sendProof(order.id);
+    await admin.confirmOrder(order.id);
+    await signIn(page, student.email, student.password);
+
+    await page.goto(`/packs/${buyablePack.id}`);
+    await page.getByRole('link', { name: 'Practice by topic' }).click();
+    await expect(page).toHaveURL(`/packs/${buyablePack.id}/practice`);
+
+    // The topic of the pack's blueprint, with its 6 published questions: only 5 can be chosen.
+    const topic = page.getByRole('radio', { name: /Shop topic/ });
+    await expect(topic).toHaveCount(1);
+    await expect(page.getByText('6 questions', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start practice' })).toBeDisabled();
+    await topic.check();
+    await expect(page.getByRole('radio', { name: /^5 questions · 25 minutes$/ })).toBeChecked();
+    await expect(page.getByRole('radio', { name: /^10 questions/ })).toBeDisabled();
+    await expect(page.getByRole('radio', { name: /^20 questions/ })).toBeDisabled();
+
+    await page.getByRole('button', { name: 'Start practice' }).click();
+    await expect(page).toHaveURL(/\/exams\/[0-9a-f-]+$/);
+    await expect(page.getByText(/^Practice: Shop topic/)).toBeVisible();
+    await expect(page.getByRole('timer', { name: 'Time left' })).toBeVisible();
+    const questions = page.getByRole('group', { name: /^Question \d/ });
+    await expect(questions).toHaveCount(5);
+    await expect(questions.first().getByText(/\(1 points\)$|\(1 point\)$/)).toBeVisible();
+
+    await questions.first().getByRole('radio').first().check();
+    await page.getByRole('button', { name: 'Submit' }).click();
+    await page.getByRole('button', { name: 'Yes, submit' }).click();
+    await expect(page).toHaveURL(/\/result$/);
+    await expect(page.getByText('Correct answer')).toHaveCount(5);
+
+    const attempt = (await student.api.attempts()).items[0]!;
+    expect(attempt.mode).toBe('PRACTICE');
+    expect((await student.api.attemptResult(attempt.attemptId)).totalPoints).toBe(5);
+
+    await page.goto('/history');
+    await expect(page.getByRole('link', { name: /^Practice: Shop topic/ })).toHaveCount(1);
+
+    // A student without the pack: no link, the page says so, the API refuses, and no free attempt is used.
+    const other = await accounts.customer();
+    const otherPage = await newBrowser();
+    await signIn(otherPage, other.email, other.password);
+    await otherPage.goto(`/packs/${buyablePack.id}`);
+    await expect(otherPage.getByRole('button', { name: /for free$/ })).toBeVisible();
+    await expect(otherPage.getByRole('link', { name: 'Practice by topic' })).toHaveCount(0);
+    await otherPage.goto(`/packs/${buyablePack.id}/practice`);
+    await expect(otherPage.getByText(/needs the exam pack/i)).toBeVisible();
+    await expect(other.api.practiceTopics(buyablePack.id)).rejects.toMatchObject({
+      status: 403,
+      code: 'ENTITLEMENT_REQUIRED',
+    });
+    await expect(
+      other.api.startPractice({ examPackId: buyablePack.id, topicId: 'x', questionCount: 5 }),
+    ).rejects.toMatchObject({ status: 403, code: 'ENTITLEMENT_REQUIRED' });
   });
 });
