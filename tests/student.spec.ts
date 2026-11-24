@@ -367,7 +367,7 @@ test.describe('Mock exams (student web)', () => {
     expect((await other.api.attempts()).items).toHaveLength(0);
   });
 
-  test('E2E-ATT-03 · Without access: a demo, then the whole exam after buying', async ({
+  test('E2E-ATT-03 · Without the pack: two free attempts of the whole exam, then buy', async ({
     page,
     accounts,
     admin,
@@ -376,21 +376,36 @@ test.describe('Mock exams (student web)', () => {
     const student = await accounts.customer();
     await signIn(page, student.email, student.password);
 
+    // A free attempt is a whole exam, and the page says how many are left.
     await page.goto(`/packs/${buyablePack.id}`);
-    await page.getByRole('button', { name: /^Try the demo/ }).click();
-    await expect(page.getByText(/this is a demo with a few questions/)).toBeVisible();
+    await page.getByRole('button', { name: /^Try .* for free$/ }).click();
+    await expect(
+      page.getByText(/this is a free attempt. Free attempts left for this pack: 1/),
+    ).toBeVisible();
+    await expect(page.getByRole('group', { name: /^Question \d/ })).toHaveCount(4);
     await expect(page.getByRole('link', { name: 'Buy', exact: true })).toHaveAttribute(
       'href',
       `/packs/${buyablePack.id}`,
     );
 
-    // Buy the pack and have it confirmed: the same exam is served whole from now on.
+    await page.goto(`/packs/${buyablePack.id}`);
+    await page.getByRole('button', { name: /^Try .* for free$/ }).click();
+    await expect(page.getByText(/Free attempts left for this pack: 0/)).toBeVisible();
+
+    // The third is refused, and the pack can still be bought.
+    await page.goto(`/packs/${buyablePack.id}`);
+    await page.getByRole('button', { name: /^Try .* for free$/ }).click();
+    await expect(page.getByText(/the free attempts of this exam pack are used/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Buy', exact: true })).toBeVisible();
+
+    // Buy the pack and have it confirmed: there is no limit, and no notice, from now on.
     const order = await student.api.buy(buyablePack.id);
     await student.api.sendProof(order.id);
     await admin.confirmOrder(order.id);
-    await page.reload();
+    await page.goto(`/packs/${buyablePack.id}`);
+    await page.getByRole('button', { name: /^Start / }).click();
     await expect(page.getByRole('timer', { name: 'Time left' })).toBeVisible();
-    await expect(page.getByText(/this is a demo with a few questions/)).toHaveCount(0);
+    await expect(page.getByText(/this is a free attempt/)).toHaveCount(0);
     await expect(page.getByRole('group', { name: /^Question \d/ })).toHaveCount(4);
   });
 });
