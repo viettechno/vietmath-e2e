@@ -106,6 +106,8 @@ Useful while debugging:
 | `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`         | `admin@vietmath.test`, `E2eAdmin123`                  | An existing System Admin                                                                              |
 | `E2E_MAIL_DOMAIN`                               | `vietmath.test`                                       | Domain of the email addresses the tests create                                                        |
 
+The images in GHCR are `linux/amd64` only (the VMs are x86_64). On a Mac with Apple Silicon they run under emulation, which is slow: build the three images from the sources (`docker build` in each repository; the two webs need the build secret of their README) and pass them with the variables above and `E2E_SKIP_PULL=1`.
+
 ### Against staging
 
 Point the tests at the staging VM. Staging sends all its e-mail to a Mailpit (the test
@@ -189,7 +191,7 @@ logins from the secrets `E2E_STAGING_BASE_URL`, `E2E_STAGING_ADMIN_URL`,
 2. **Which app versions to test.** Until the Release Phase 2 branches are merged, `latest`
    has no Phase 2 features. Set the repository variables (Settings → Secrets and
    variables → Actions → Variables) `E2E_BACKEND_TAG` and `E2E_WEB_TAG` to
-   `feat-question-bank`. Delete them after the merge to test `latest`.
+   `feat-question-bank` (a branch has an image only after **Publish** was run by hand for it, in its repository). Delete them after the merge to test `latest`.
 
 ### Running from the app repositories (next step)
 
