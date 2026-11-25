@@ -100,6 +100,8 @@ Useful while debugging:
 | ----------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `BACKEND_TAG`, `WEB_TAG`, `ADMIN_WEB_TAG`       | `latest`                                              | GHCR image tags of `vietmath-backend` / `vietmath-web` / `vietmath-admin-web` (`scripts/stack-up.sh`) |
 | `BACKEND_IMAGE`, `WEB_IMAGE`, `ADMIN_WEB_IMAGE` | `ghcr.io/viettechno/vietmath-{backend,web,admin-web}` | Other images, e.g. ones built locally (with `E2E_SKIP_PULL=1`)                                        |
+
+The images in GHCR are `linux/amd64` only (the VMs are x86_64). On a Mac with Apple Silicon they run under emulation, which is slow: build the three images from the sources (`docker build` in each repository; the two webs need the build secret of their README) and pass them with the variables above and `E2E_SKIP_PULL=1`.
 | `E2E_BASE_URL`                                  | `http://localhost:8080`                               | The student web under test (web and `/api` on one origin)                                             |
 | `E2E_ADMIN_URL`                                 | `http://localhost:8081`                               | The admin web under test (staff pages; `/api` on the same origin)                                     |
 | `E2E_MAILPIT_URL`                               | `http://localhost:8025`                               | Mailpit, to read email codes. Empty: tests that need a code are skipped                               |
