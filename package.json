@@ -18,9 +18,9 @@
     "stack:down": "scripts/stack-down.sh"
   },
   "devDependencies": {
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.65.1",
     "@types/node": "^22.20.4",
-    "prettier": "^3.9.9",
+    "prettier": "^3.10.1",
     "typescript": "^5.9.3"
   }
 }
