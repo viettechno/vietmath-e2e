@@ -5,14 +5,14 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
-    schedule: { interval: weekly, day: monday, time: "02:00", timezone: Asia/Ho_Chi_Minh }
+    schedule: { interval: weekly, day: monday, time: '02:00', timezone: Asia/Ho_Chi_Minh }
     open-pull-requests-limit: 3
-    commit-message: { prefix: "chore(deps)" }
+    commit-message: { prefix: 'chore(deps)' }
     groups:
       npm-minor-and-patch: { update-types: [minor, patch] }
   - package-ecosystem: github-actions
     directory: /
-    schedule: { interval: weekly, day: monday, time: "02:00", timezone: Asia/Ho_Chi_Minh }
-    commit-message: { prefix: "chore(ci)" }
+    schedule: { interval: weekly, day: monday, time: '02:00', timezone: Asia/Ho_Chi_Minh }
+    commit-message: { prefix: 'chore(ci)' }
     groups:
-      actions: { patterns: ["*"] }
+      actions: { patterns: ['*'] }
