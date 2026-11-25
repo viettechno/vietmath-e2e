@@ -354,6 +354,12 @@ test.describe('Mock exams (student web)', () => {
     // Each question shows why its answer is right (the explanation was not there during the exam).
     await expect(page.getByRole('heading', { name: 'Explanation' })).toHaveCount(4);
     await expect(page.getByText(/^Why: Shop question/).first()).toBeVisible();
+    // ... and the picture of the explanation, signed: it loads.
+    const pictures = page.getByAltText('Explanation picture 1');
+    await expect(pictures).toHaveCount(4);
+    await expect
+      .poll(() => pictures.first().evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
     const attempt = (await student.api.attempts()).items[0]!;
     const result = await student.api.attemptResult(attempt.attemptId);
     expect(result.score).toBeGreaterThan(0);
