@@ -189,7 +189,7 @@ logins from the secrets `E2E_STAGING_BASE_URL`, `E2E_STAGING_ADMIN_URL`,
 2. **Which app versions to test.** Until the Release Phase 2 branches are merged, `latest`
    has no Phase 2 features. Set the repository variables (Settings → Secrets and
    variables → Actions → Variables) `E2E_BACKEND_TAG` and `E2E_WEB_TAG` to
-   `feat-question-bank`. Delete them after the merge to test `latest`.
+   `feat-question-bank` (a branch has an image only after **Publish** was run by hand for it, in its repository). Delete them after the merge to test `latest`.
 
 ### Running from the app repositories (next step)
 
