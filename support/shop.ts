@@ -98,10 +98,15 @@ async function buildShopPack(
       staff(admin, 'REVIEWER'),
     ]);
     const topic = await admin.createTopic({ nameEn: unique('Shop topic'), nameVi: null });
+    // One picture in every explanation: the result shows it, signed (E2E-ATT-01).
+    const picture = (await creator.uploadImage('assets/two-dots.png', 'image/png')).url;
     for (let i = 0; i < 6; i++) {
       const prompt = unique('Shop question');
       const q = await creator.createQuestion(
-        textQuestion([topic.id], prompt, { explanationEn: `Why: ${prompt} has the first answer.` }),
+        textQuestion([topic.id], prompt, {
+          explanationEn: `Why: ${prompt} has the first answer.`,
+          explanationImageUrls: [picture],
+        }),
       );
       await creator.act(q.id, 'submit-review');
       await reviewer.act(q.id, 'approve');

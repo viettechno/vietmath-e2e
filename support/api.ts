@@ -97,6 +97,8 @@ export interface QuestionInput {
   /** Why the answer is right (optional): students read it with their result. */
   explanationEn?: string | null;
   explanationVi?: string | null;
+  /** Pictures of the explanation, in order (at most 10). */
+  explanationImageUrls?: string[];
   isTemplate?: boolean;
   template?: QuestionTemplate | null;
   answerChoices: AnswerChoice[];
