@@ -325,10 +325,17 @@ test.describe('Mock exams (student web)', () => {
       [1, 'A'],
       [2, 'B'],
     ] as const) {
+      // The count under the exam changes at once, and the answer is saved a moment later: wait for the save, or a
+      // reload below can cut it off.
+      const saved = page.waitForResponse(
+        (r) =>
+          r.request().method() === 'POST' && /\/attempts\/[^/]+\/answers$/.test(r.url()) && r.ok(),
+      );
       await questions
         .nth(i)
         .getByRole('radio', { name: new RegExp(`^${label}`) })
         .check();
+      await saved;
     }
     await expect(page.getByText('3 of 4 answered')).toBeVisible();
 
