@@ -62,7 +62,7 @@ scenario to the suite that runs it (§15.3a).
 
 ## Run the tests on your computer
 
-You need Docker, Node.js 22, and read access to the app images in the GitHub
+You need Docker, Node.js 26, and read access to the app images in the GitHub
 Container Registry (`docker login ghcr.io` with a token that has `read:packages`).
 
 ```bash

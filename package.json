@@ -5,7 +5,7 @@
   "description": "Browser end-to-end tests for VietMath (web + API)",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=26"
   },
   "scripts": {
     "test": "playwright test",
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.65.1",
-    "@types/node": "^22.20.4",
+    "@types/node": "^26.6.11",
     "prettier": "^3.10.1",
     "typescript": "^7.0.2"
   }
