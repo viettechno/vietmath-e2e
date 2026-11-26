@@ -42,8 +42,8 @@ jobs:
     # Not ubuntu-latest: it moved to 26.04, which Playwright 1.56 cannot install a browser on.
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -63,8 +63,8 @@ jobs:
       # Pull requests and pushes run the smoke suite; the weekly run everything.
       E2E_GREP: ${{ inputs.grep || (github.event_name == 'schedule' && '.') || '@smoke' }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -73,7 +73,7 @@ jobs:
 
       # The app images are private packages: this repository needs read access
       # to them (see README, "CI setup"), or a GHCR_TOKEN secret.
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -89,7 +89,7 @@ jobs:
         if: failure()
         run: docker compose -f stack/docker-compose.yml logs --no-color > stack.log
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
