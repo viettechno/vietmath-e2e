@@ -20,7 +20,7 @@ x-database-url: &database-url postgres://vietmath:e2e-postgres@postgres:5432/vie
 services:
   postgres:
     # Keep in step with vietmath-backend (docker-compose.yml, CI) and vietmath-infra.
-    image: postgres:18.4
+    image: postgres:19.0
     environment:
       POSTGRES_USER: vietmath
       POSTGRES_PASSWORD: e2e-postgres
@@ -50,7 +50,7 @@ services:
 
   # The API runs as the distroless "nonroot" user (uid 65532).
   media-init:
-    image: busybox:1.37
+    image: busybox:1.38
     command: ['chown', '-R', '65532:65532', '/data/media']
     volumes:
       - media:/data/media
@@ -102,7 +102,7 @@ services:
 
   # Same routing as staging and production: two sites, /api/* on either to the API.
   caddy:
-    image: caddy:2.10-alpine
+    image: caddy:2.11-alpine
     environment:
       SITE_ADDRESS: ':80'
       ADMIN_SITE_ADDRESS: ':8081'
